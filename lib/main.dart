@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_manager.dart';
 import 'core/supabase/supabase_config.dart';
 import 'screens/courses/courses_screen.dart';
+import 'screens/courses/my_learning_screen.dart';
 import 'screens/catalog/catalog_screen.dart';
 import 'screens/profile/profile_screen.dart';
 
@@ -69,6 +70,11 @@ class _MainShellState extends State<MainShell> {
       label: 'Courses',
     ),
     _NavItem(
+      icon: Icons.school_outlined,
+      activeIcon: Icons.school_rounded,
+      label: 'My Learning',
+    ),
+    _NavItem(
       icon: Icons.grid_view_outlined,
       activeIcon: Icons.grid_view_rounded,
       label: 'Catalog',
@@ -82,6 +88,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _screens = const [
     CoursesScreen(),
+    MyLearningScreen(),
     CatalogScreen(),
     ProfileScreen(),
   ];

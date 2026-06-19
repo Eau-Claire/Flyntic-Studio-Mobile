@@ -32,6 +32,9 @@ class _CoursesScreenState extends State<CoursesScreen>
   bool _sortAscending = false;
 
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _suggestionOverlay;
   final ScrollController _scrollController = ScrollController();
   final ScrollController _featuredScrollController = ScrollController();
 
@@ -43,6 +46,18 @@ class _CoursesScreenState extends State<CoursesScreen>
   ];
 
   @override
+  void reassemble() {
+    super.reassemble();
+    _hideSuggestions();
+  }
+
+  @override
+  void deactivate() {
+    _hideSuggestions();
+    super.deactivate();
+  }
+
+  @override
   void initState() {
     super.initState();
     _repo = CourseRepository(Supabase.instance.client);
@@ -50,14 +65,27 @@ class _CoursesScreenState extends State<CoursesScreen>
     _loadFeaturedCourses();
     _loadAllCourses(reset: true);
     _scrollController.addListener(_onScroll);
+    _searchFocusNode.addListener(() {
+      if (_searchFocusNode.hasFocus) {
+        _showSuggestions();
+      } else {
+        Future.delayed(const Duration(milliseconds: 150), () {
+          if (mounted) {
+            _hideSuggestions();
+          }
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _scrollController.dispose();
     _featuredScrollController.dispose();
+    _hideSuggestions();
     super.dispose();
   }
 
@@ -158,6 +186,8 @@ class _CoursesScreenState extends State<CoursesScreen>
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             children: [
               _buildHeader(),
+              const SizedBox(height: 16),
+              _buildSearchBar(),
               const SizedBox(height: 20),
               if (_searchQuery.isNotEmpty) ...[
                 _buildSearchSection(),
@@ -227,21 +257,59 @@ class _CoursesScreenState extends State<CoursesScreen>
             ],
           ),
         ),
-        // Search icon circle
-        GestureDetector(
-          onTap: () => _showSearchDialog(context),
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.bgCard,
-              border: Border.all(color: AppColors.border),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.bgCard,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: AppColors.border, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Icon(Icons.search_rounded, color: AppColors.textPrimary, size: 20),
+          ],
+        ),
+        child: TextField(
+          controller: _searchController,
+          focusNode: _searchFocusNode,
+          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
+          onChanged: (val) {
+            _onSearch(val);
+          },
+          decoration: InputDecoration(
+            hintText: 'Search courses, skills, categories...',
+            hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 16, right: 10),
+              child: Icon(Icons.search_rounded, color: AppColors.textMuted, size: 22),
+            ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear_rounded, color: AppColors.textMuted, size: 20),
+                      onPressed: () {
+                        _searchController.clear();
+                        _onSearch('');
+                      },
+                    )
+                  : Icon(Icons.mic_none_rounded, color: AppColors.textMuted, size: 20),
+            ),
+            suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -599,13 +667,13 @@ class _CoursesScreenState extends State<CoursesScreen>
         const SizedBox(height: 16),
         _isLoadingFeatured
             ? SizedBox(
-                height: 260,
+                height: 220,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: 3,
                   separatorBuilder: (_, __) => const SizedBox(width: 16),
                   itemBuilder: (_, __) => SizedBox(
-                    width: 170,
+                    width: 180,
                     child: const CourseCardShimmer(),
                   ),
                 ),
@@ -626,7 +694,7 @@ class _CoursesScreenState extends State<CoursesScreen>
                     ),
                   )
                 : SizedBox(
-                    height: 260,
+                    height: 220,
                     child: ListView.separated(
                       controller: _featuredScrollController,
                       scrollDirection: Axis.horizontal,
@@ -634,7 +702,7 @@ class _CoursesScreenState extends State<CoursesScreen>
                       separatorBuilder: (_, __) => const SizedBox(width: 16),
                       itemBuilder: (context, index) {
                         return SizedBox(
-                          width: 180,
+                          width: 195,
                           child: CourseCard(
                             course: _featuredCourses[index],
                             compact: true,
@@ -670,19 +738,17 @@ class _CoursesScreenState extends State<CoursesScreen>
         _buildLevelFilter(),
         const SizedBox(height: 16),
         _allCourses.isEmpty && _isLoadingAll
-             ? GridView.builder(
-                shrinkWrap: true,
-                primary: false,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.60,
-                ),
-                itemCount: 4,
-                itemBuilder: (_, __) => const CourseCardShimmer(),
-              )
+             ? ListView.separated(
+                 shrinkWrap: true,
+                 primary: false,
+                 physics: const NeverScrollableScrollPhysics(),
+                 itemCount: 4,
+                 separatorBuilder: (_, __) => const SizedBox(height: 14),
+                 itemBuilder: (_, __) => const SizedBox(
+                   height: 140,
+                   child: CourseCardShimmer(),
+                 ),
+               )
             : _allCourses.isEmpty
                 ? Container(
                     height: 140,
@@ -698,22 +764,30 @@ class _CoursesScreenState extends State<CoursesScreen>
                       ),
                     ),
                   )
-                : GridView.builder(
+                : ListView.separated(
                     shrinkWrap: true,
                     primary: false,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.60,
-                    ),
-                    itemCount: _allCourses.length,
+                    itemCount: _allCourses.length + (_isLoadingAll ? 1 : 0),
+                    separatorBuilder: (_, __) => const SizedBox(height: 14),
                     itemBuilder: (context, index) {
-                      return CourseCard(
-                        course: _allCourses[index],
-                        compact: true,
-                        onTap: () => _openCourse(_allCourses[index]),
+                      if (index == _allCourses.length) {
+                        return SizedBox(
+                          height: 80,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.accentOrange,
+                            ),
+                          ),
+                        );
+                      }
+                      return SizedBox(
+                        height: 140,
+                        child: CourseCard(
+                          course: _allCourses[index],
+                          noImage: true,
+                          onTap: () => _openCourse(_allCourses[index]),
+                        ),
                       );
                     },
                   ),
@@ -743,17 +817,15 @@ class _CoursesScreenState extends State<CoursesScreen>
         ),
         const SizedBox(height: 16),
         _isLoadingAll
-            ? GridView.builder(
+            ? ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.64,
-                ),
                 itemCount: 4,
-                itemBuilder: (_, __) => const CourseCardShimmer(),
+                separatorBuilder: (_, __) => const SizedBox(height: 14),
+                itemBuilder: (_, __) => const SizedBox(
+                  height: 140,
+                  child: CourseCardShimmer(),
+                ),
               )
             : _allCourses.isEmpty
                 ? _buildEmptyState(
@@ -761,21 +833,29 @@ class _CoursesScreenState extends State<CoursesScreen>
                     title: 'No courses found',
                     subtitle: 'Try another search keyword',
                   )
-                : GridView.builder(
+                : ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.64,
-                    ),
-                    itemCount: _allCourses.length,
+                    itemCount: _allCourses.length + (_isLoadingAll ? 1 : 0),
+                    separatorBuilder: (_, __) => const SizedBox(height: 14),
                     itemBuilder: (context, index) {
-                      return CourseCard(
-                        course: _allCourses[index],
-                        compact: true,
-                        onTap: () => _openCourse(_allCourses[index]),
+                      if (index == _allCourses.length) {
+                        return SizedBox(
+                          height: 80,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.accentOrange,
+                            ),
+                          ),
+                        );
+                      }
+                      return SizedBox(
+                        height: 140,
+                        child: CourseCard(
+                          course: _allCourses[index],
+                          noImage: true,
+                          onTap: () => _openCourse(_allCourses[index]),
+                        ),
                       );
                     },
                   ),
@@ -786,60 +866,113 @@ class _CoursesScreenState extends State<CoursesScreen>
   void _onSearch(String value) {
     setState(() => _searchQuery = value);
     _loadAllCourses(reset: true);
+    _suggestionOverlay?.markNeedsBuild();
   }
 
-  void _showSearchDialog(BuildContext context) {
-    showDialog(
-      context: context,
+  void _showSuggestions() {
+    if (_suggestionOverlay != null) return;
+
+    final overlay = Overlay.of(context);
+    _suggestionOverlay = OverlayEntry(
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.bgCard,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('Search Courses', style: AppTextStyles.headlineMedium),
-          content: TextField(
-            controller: _searchController,
-            autofocus: true,
-            style: AppTextStyles.titleMedium,
-            decoration: InputDecoration(
-              hintText: 'Type course name...',
-              prefixIcon: Icon(Icons.search_rounded, color: AppColors.textMuted),
-            ),
-            onSubmitted: (val) {
-              Navigator.pop(context);
-              _onSearch(val);
-            },
-          ),
-          actions: [
-            TextButton(
-              child: Text('Cancel', style: AppTextStyles.bodyMedium),
-              onPressed: () => Navigator.pop(context),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.pop(context);
-                _onSearch(_searchController.text);
-              },
+        return Positioned(
+          width: MediaQuery.of(context).size.width - 48,
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            offset: const Offset(0, 58), // Height of pill search bar + gap
+            child: Material(
+              color: Colors.transparent,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: AppColors.accentGradient,
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.bgCard,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border, width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  'Search',
-                  style: AppTextStyles.labelLarge.copyWith(
-                    color: ThemeManager.instance.themeType == ThemeType.monochrome
-                        ? AppColors.bgPrimary
-                        : Colors.white,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _getSuggestions().map((suggestion) {
+                      return InkWell(
+                        onTap: () {
+                          _searchController.text = suggestion;
+                          _onSearch(suggestion);
+                          _searchFocusNode.unfocus();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              Icon(Icons.search_rounded, color: AppColors.textMuted, size: 16),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  suggestion,
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         );
       },
     );
+
+    overlay.insert(_suggestionOverlay!);
   }
+
+  void _hideSuggestions() {
+    _suggestionOverlay?.remove();
+    _suggestionOverlay = null;
+  }
+
+  List<String> _getSuggestions() {
+    final query = _searchController.text.trim().toLowerCase();
+    final staticSuggestions = [
+      'Drone Build Basics',
+      'Betaflight Configurator',
+      'Arduino Microcontroller',
+      'ESC Soldering Techniques',
+      'Flight Controller Guide'
+    ];
+
+    if (query.isEmpty) {
+      return staticSuggestions;
+    }
+
+    final matches = _allCourses
+        .where((c) => c.title.toLowerCase().contains(query))
+        .map((c) => c.title)
+        .take(4)
+        .toList();
+
+    if (matches.isEmpty) {
+      return staticSuggestions
+          .where((s) => s.toLowerCase().contains(query))
+          .take(4)
+          .toList();
+    }
+    return matches;
+  }
+
+
 
   Widget _buildLevelFilter() {
     return SizedBox(

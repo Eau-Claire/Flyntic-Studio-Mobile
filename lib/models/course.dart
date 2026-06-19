@@ -99,6 +99,7 @@ class Course {
     final displayPrice = discountPrice ?? price;
     if (displayPrice == null) {
       if (requiredTier != null && requiredTier != 'free') {
+        if (requiredTier!.toLowerCase() == 'pro') return 'Premium';
         return '${requiredTier![0].toUpperCase()}${requiredTier!.substring(1)}';
       }
       return 'Free';

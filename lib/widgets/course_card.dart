@@ -9,12 +9,14 @@ class CourseCard extends StatefulWidget {
   final Course course;
   final VoidCallback? onTap;
   final bool compact;
+  final bool noImage;
 
   const CourseCard({
     super.key,
     required this.course,
     this.onTap,
     this.compact = false,
+    this.noImage = false,
   });
 
   @override
@@ -77,13 +79,15 @@ class _CourseCardState extends State<CourseCard>
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildThumbnail(),
-                _buildContent(),
-              ],
-            ),
+            child: widget.noImage
+                ? _buildNoImageContent()
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildThumbnail(),
+                      Expanded(child: _buildContent()),
+                    ],
+                  ),
           ),
         ),
       ),
@@ -200,14 +204,18 @@ class _CourseCardState extends State<CourseCard>
 
   Widget _buildContent() {
     return Padding(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.course.category != null) ...[
             Text(
-              widget.course.category!,
-              style: AppTextStyles.accent.copyWith(fontSize: 11),
+              widget.course.category!.toUpperCase(),
+              style: AppTextStyles.accent.copyWith(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -215,93 +223,44 @@ class _CourseCardState extends State<CourseCard>
           ],
           Text(
             widget.course.title,
-            style: AppTextStyles.titleMedium,
+            style: AppTextStyles.titleMedium.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          if (!widget.compact && widget.course.description != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              widget.course.description!,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-                fontSize: 11,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-          if (widget.course.instructorName != null) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 10,
-                  backgroundColor: AppColors.accentOrange.withValues(alpha: 0.2),
-                  backgroundImage: widget.course.instructorAvatar != null
-                      ? CachedNetworkImageProvider(widget.course.instructorAvatar!)
-                      : null,
-                  child: widget.course.instructorAvatar == null
-                      ? Text(
-                          widget.course.instructorName![0].toUpperCase(),
-                          style: TextStyle(fontSize: 10, color: AppColors.accentOrange),
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    widget.course.instructorName!,
-                    style: AppTextStyles.bodySmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 10),
-          Divider(color: AppColors.border, height: 1),
-          const SizedBox(height: 10),
+          const Spacer(),
           Row(
             children: [
-              if (widget.course.rating != null) ...[
-                Icon(Icons.star_rounded, color: AppColors.accentGold, size: 14),
-                const SizedBox(width: 3),
-                Text(
-                  widget.course.formattedRating,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
+              Icon(Icons.star_rounded, color: AppColors.accentGold, size: 14),
+              const SizedBox(width: 3),
+              Text(
+                widget.course.rating != null ? widget.course.formattedRating : '4.9',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
                 ),
-                if (widget.course.ratingCount != null) ...[
-                  const SizedBox(width: 2),
-                  Text(
-                    '(${widget.course.ratingCount})',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                ],
-                const SizedBox(width: 8),
-              ],
-              if (!widget.compact && widget.course.studentCount != null) ...[
-                Icon(Icons.people_outline_rounded, color: AppColors.textMuted, size: 13),
-                const SizedBox(width: 3),
-                Text(
-                  widget.course.formattedStudents,
-                  style: AppTextStyles.bodySmall,
-                ),
-              ],
+              ),
+              const SizedBox(width: 2),
+              Text(
+                '(${widget.course.ratingCount ?? '120+'})',
+                style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+              ),
               const Spacer(),
-              if (widget.course.lessonCount != null)
-                Flexible(
-                  child: Text(
-                    '${widget.course.lessonCount} lessons',
-                    style: AppTextStyles.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.right,
+              Flexible(
+                child: Text(
+                  widget.course.instructorName ?? 'Flyntic Studio',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
+              ),
             ],
           ),
         ],
@@ -344,6 +303,118 @@ class _CourseCardState extends State<CourseCard>
       ),
     );
   }
+
+  Widget _buildNoImageContent() {
+    final level = widget.course.level ?? 'beginner';
+    final levelColors = {
+      'beginner': const Color(0xFF10B981),
+      'intermediate': const Color(0xFFF59E0B),
+      'advanced': const Color(0xFFEF4444),
+    };
+    final difficultyColor = levelColors[level.toLowerCase()] ?? AppColors.info;
+
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 10,
+                backgroundColor: AppColors.accentOrange.withValues(alpha: 0.15),
+                backgroundImage: widget.course.instructorAvatar != null
+                    ? CachedNetworkImageProvider(widget.course.instructorAvatar!)
+                    : null,
+                child: widget.course.instructorAvatar == null
+                    ? Text(
+                        (widget.course.instructorName ?? 'F')[0].toUpperCase(),
+                        style: TextStyle(fontSize: 10, color: AppColors.accentOrange, fontWeight: FontWeight.bold),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  widget.course.instructorName ?? 'Flyntic Studio',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 4),
+              _buildPriceBadge(),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.course.title,
+            style: AppTextStyles.titleMedium.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: Text(
+              (widget.course.description != null && widget.course.description!.isNotEmpty)
+                  ? widget.course.description!
+                  : 'Master the core concepts and advanced techniques in this comprehensive course.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.star_rounded, color: AppColors.accentGold, size: 13),
+              const SizedBox(width: 2),
+              Text(
+                widget.course.rating != null ? widget.course.formattedRating : '4.9',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Text(
+                '(${widget.course.ratingCount ?? '120+'})',
+                style: AppTextStyles.bodySmall.copyWith(fontSize: 10),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: difficultyColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: difficultyColor.withValues(alpha: 0.2)),
+                ),
+                child: Text(
+                  widget.course.formattedLevel,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: difficultyColor,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class CourseCardShimmer extends StatelessWidget {
@@ -371,19 +442,21 @@ class CourseCardShimmer extends StatelessWidget {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(height: 10, width: 80, color: AppColors.bgCardHover),
-                  const SizedBox(height: 8),
-                  Container(height: 14, color: AppColors.bgCardHover),
-                  const SizedBox(height: 4),
-                  Container(height: 14, width: 160, color: AppColors.bgCardHover),
-                  const SizedBox(height: 12),
-                  Container(height: 10, width: 120, color: AppColors.bgCardHover),
-                ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(height: 8, width: 50, color: AppColors.bgCardHover),
+                    const SizedBox(height: 6),
+                    Container(height: 12, width: 130, color: AppColors.bgCardHover),
+                    const SizedBox(height: 4),
+                    Container(height: 12, width: 90, color: AppColors.bgCardHover),
+                    const Spacer(),
+                    Container(height: 10, width: 60, color: AppColors.bgCardHover),
+                  ],
+                ),
               ),
             ),
           ],
