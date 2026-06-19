@@ -479,64 +479,25 @@ class _FlynticLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: ThemeManager.instance,
-      builder: (context, _) {
-        final manager = ThemeManager.instance;
-        String assetPath;
-        bool showTextWidget;
-
-        if (manager.themeType == ThemeType.classic) {
-          assetPath = 'assets/logo-studio.png';
-          showTextWidget = false;
-        } else {
-          if (manager.isDark) {
-            assetPath = 'assets/logo-white.png';
-            showTextWidget = false;
-          } else {
-            assetPath = 'assets/logo-black.png';
-            showTextWidget = true;
-          }
-        }
-
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset(
-              assetPath,
-              height: 32,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  gradient: AppColors.accentGradient,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.flight_takeoff_rounded,
-                  color: ThemeManager.instance.themeType == ThemeType.monochrome
-                      ? AppColors.bgPrimary
-                      : Colors.white,
-                  size: 16,
-                ),
-              ),
-            ),
-            if (showTextWidget) ...[
-              const SizedBox(width: 8),
-              Text(
-                'flyntic studio',
-                style: AppTextStyles.headlineMedium.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ],
-          ],
-        );
-      },
+    return Image.asset(
+      'assets/logo.png',
+      height: 32,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          gradient: AppColors.accentGradient,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          Icons.flight_takeoff_rounded,
+          color: ThemeManager.instance.themeType == ThemeType.monochrome
+              ? AppColors.bgPrimary
+              : Colors.white,
+          size: 16,
+        ),
+      ),
     );
   }
 }
