@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
-import '../../widgets/buttons.dart';
+import '../../core/theme/theme_manager.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -13,21 +13,43 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final _confirmPassCtrl = TextEditingController();
   bool _isLogin = true;
   bool _isLoading = false;
   bool _obscurePass = true;
+  bool _obscureConfirmPass = true;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passCtrl.dispose();
+    _confirmPassCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _handleAuth() async {
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text.trim();
-    if (email.isEmpty || pass.isEmpty) return;
+    final confirmPass = _confirmPassCtrl.text.trim();
+
+    if (email.isEmpty) {
+      _showError('Vui lòng nhập địa chỉ email');
+      return;
+    }
+    if (pass.isEmpty) {
+      _showError('Vui lòng nhập mật khẩu');
+      return;
+    }
+    if (!_isLogin) {
+      if (confirmPass.isEmpty) {
+        _showError('Vui lòng xác nhận mật khẩu');
+        return;
+      }
+      if (pass != confirmPass) {
+        _showError('Mật khẩu xác nhận không trùng khớp!');
+        return;
+      }
+    }
 
     setState(() => _isLoading = true);
     try {
@@ -41,105 +63,320 @@ class _AuthScreenState extends State<AuthScreen> {
           email: email,
           password: pass,
         );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Đăng ký thành công! Vui lòng đăng nhập.'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+          setState(() {
+            _isLogin = true;
+            _passCtrl.clear();
+            _confirmPassCtrl.clear();
+          });
+        }
       }
-      // AuthGate will automatically switch the screen when auth state changes
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
+      _showError(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String hintText,
+    bool obscureText = false,
+    bool isPassword = false,
+    bool isDark = false,
+    TextInputType keyboardType = TextInputType.text,
+    VoidCallback? onToggleVisibility,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.bgCard : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        style: AppTextStyles.bodyLarge.copyWith(
+          color: AppColors.textPrimary,
+          fontSize: 14,
+        ),
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(
+            color: AppColors.textMuted.withValues(alpha: 0.8),
+            fontSize: 13,
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: isDark ? AppColors.border : Colors.grey.shade200,
+              width: 1,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: AppColors.accentOrange,
+              width: 1.5,
+            ),
+          ),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    color: AppColors.textMuted,
+                    size: 20,
+                  ),
+                  onPressed: onToggleVisibility,
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton() {
+    final isMonochrome = ThemeManager.instance.themeType == ThemeType.monochrome;
+
+    final decoration = isMonochrome
+        ? BoxDecoration(
+            color: AppColors.accentOrange,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accentOrange.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          )
+        : BoxDecoration(
+            gradient: AppColors.accentGradient,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accentOrange.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          );
+
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Container(
+        decoration: decoration,
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : _handleAuth,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            foregroundColor: AppColors.accentOrangeText,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
+          ),
+          child: _isLoading
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: AppColors.accentOrangeText,
+                  ),
+                )
+              : Text(
+                  _isLogin ? 'Sign In' : 'Sign up',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = ThemeManager.instance.isDark;
+    final logoAsset = isDark ? 'assets/logo-white.png' : 'assets/logo-black.png';
+
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ShaderMask(
-                  shaderCallback: (bounds) => AppColors.accentGradient.createShader(bounds),
-                  child: Text(
-                    _isLogin ? 'Welcome Back' : 'Create Account',
-                    style: AppTextStyles.displayMedium.copyWith(color: Colors.white),
-                  ),
+        child: Stack(
+          children: [
+            // Back button at top-left for Sign Up screen
+            if (!_isLogin)
+              Positioned(
+                top: 10,
+                left: 10,
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+                  onPressed: () {
+                    setState(() {
+                      _isLogin = true;
+                    });
+                  },
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _isLogin
-                      ? 'Sign in to continue learning'
-                      : 'Join thousands of learners',
-                  style: AppTextStyles.bodyLarge,
-                ),
-                const SizedBox(height: 48),
-                TextField(
-                  controller: _emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  style: AppTextStyles.titleMedium,
-                  decoration: InputDecoration(
-                    hintText: 'Email address',
-                    prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passCtrl,
-                  obscureText: _obscurePass,
-                  style: AppTextStyles.titleMedium,
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    prefixIcon: Icon(Icons.lock_outline_rounded, color: AppColors.textMuted),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePass ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        color: AppColors.textMuted,
+              ),
+            
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Flyntic Logo
+                    Image.asset(
+                      logoAsset,
+                      height: 56,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: AppColors.accentGradient,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.flight_takeoff_rounded,
+                          color: ThemeManager.instance.themeType == ThemeType.monochrome
+                              ? AppColors.bgPrimary
+                              : Colors.white,
+                          size: 24,
+                        ),
                       ),
-                      onPressed: () => setState(() => _obscurePass = !_obscurePass),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                GradientButton(
-                  label: _isLogin ? 'Sign In' : 'Create Account',
-                  isLoading: _isLoading,
-                  width: double.infinity,
-                  onPressed: _handleAuth,
-                ),
-                const SizedBox(height: 24),
-                Center(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _isLogin = !_isLogin),
-                    child: RichText(
-                      text: TextSpan(
-                        text: _isLogin ? "Don't have an account? " : 'Already have an account? ',
-                        style: AppTextStyles.bodyMedium,
-                        children: [
-                          TextSpan(
-                            text: _isLogin ? 'Sign Up' : 'Sign In',
-                            style: AppTextStyles.accent,
+                    const SizedBox(height: 48),
+
+                    // Title
+                    Text(
+                      _isLogin ? 'Login to your Account' : 'Create your Account',
+                      style: AppTextStyles.headlineMedium.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Input Form Fields Container
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Email Field
+                        _buildInputField(
+                          controller: _emailCtrl,
+                          hintText: 'Email',
+                          keyboardType: TextInputType.emailAddress,
+                          isDark: isDark,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Password Field
+                        _buildInputField(
+                          controller: _passCtrl,
+                          hintText: 'Password',
+                          obscureText: _obscurePass,
+                          isPassword: true,
+                          isDark: isDark,
+                          onToggleVisibility: () {
+                            setState(() => _obscurePass = !_obscurePass);
+                          },
+                        ),
+
+                        // Confirm Password Field (Only for Sign Up)
+                        if (!_isLogin) ...[
+                          const SizedBox(height: 16),
+                          _buildInputField(
+                            controller: _confirmPassCtrl,
+                            hintText: 'Confirm Password',
+                            obscureText: _obscureConfirmPass,
+                            isPassword: true,
+                            isDark: isDark,
+                            onToggleVisibility: () {
+                              setState(() => _obscureConfirmPass = !_obscureConfirmPass);
+                            },
                           ),
                         ],
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Primary Action Button
+                    _buildActionButton(),
+                    const SizedBox(height: 40),
+
+                    // Footer Link
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _isLogin = !_isLogin;
+                        });
+                      },
+                      child: RichText(
+                        text: TextSpan(
+                          text: _isLogin
+                              ? "Don't have an account? "
+                              : 'Already have an account? ',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: _isLogin ? 'Sign up' : 'Sign In',
+                              style: TextStyle(
+                                color: ThemeManager.instance.themeType == ThemeType.monochrome
+                                    ? AppColors.textPrimary
+                                    : AppColors.accentOrange,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
