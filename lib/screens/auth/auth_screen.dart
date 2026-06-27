@@ -264,9 +264,9 @@ class _AuthScreenState extends State<AuthScreen> {
                     Container(
                       height: 100,
                       width: 280,
-                      alignment: Alignment.bottomCenter,
+                      alignment: const Alignment(0, 0.5),
                       child: OverflowBox(
-                        alignment: Alignment.bottomCenter,
+                        alignment: const Alignment(0, 0.5),
                         minWidth: 340,
                         maxWidth: 340,
                         minHeight: 340,
