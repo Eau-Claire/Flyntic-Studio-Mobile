@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_manager.dart';
 import '../../models/course.dart';
@@ -309,6 +310,18 @@ class _CoursesScreenState extends State<CoursesScreen>
         borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
+            Positioned(
+              right: -20,
+              top: -20,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.accentOrange.withValues(alpha: 0.08),
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -317,81 +330,101 @@ class _CoursesScreenState extends State<CoursesScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: ThemeManager.instance.isDark ? Colors.white24 : Colors.black12,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'SPONSORED',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                              letterSpacing: 1,
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.accentOrange.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: AppColors.accentOrange.withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                'RECOMMENDED',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.accentOrange,
+                                  letterSpacing: 1,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Win • macOS • Linux',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                fontSize: 10,
+                                color: AppColors.textMuted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         Text(
-                          'Angle Mode Drills',
+                          'Flyntic Studio IDE',
                           style: AppTextStyles.headlineLarge.copyWith(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 20,
-                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 22,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Master stable hovering & flight control in real simulation environments.',
+                          'Download our ultimate desktop editor for drone block-programming, hardware flashing & real-time simulations.',
                           style: AppTextStyles.bodyMedium.copyWith(
                             fontSize: 12,
                             color: AppColors.textSecondary,
+                            height: 1.4,
                           ),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('Navigating to sponsor site...'),
-                                backgroundColor: AppColors.textPrimary,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                          onPressed: () async {
+                            final url = Uri.parse('https://flyntic.site');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                            }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.textPrimary,
-                            foregroundColor: AppColors.bgPrimary,
+                            backgroundColor: AppColors.accentOrange,
+                            foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           ),
-                          child: const Text(
-                            'Learn More',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.download_rounded, size: 16),
+                              SizedBox(width: 8),
+                              Text(
+                                'Download IDE',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Simple monochrome ad graphic
                   Container(
-                    width: 70,
-                    height: 70,
+                    width: 76,
+                    height: 76,
                     decoration: BoxDecoration(
-                      color: ThemeManager.instance.isDark ? Colors.white12 : Colors.black12,
+                      color: AppColors.accentOrange.withValues(alpha: 0.08),
                       shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.accentOrange.withValues(alpha: 0.15)),
                     ),
                     child: Center(
                       child: Icon(
-                        Icons.campaign_outlined,
-                        size: 36,
-                        color: AppColors.textPrimary,
+                        Icons.developer_board_rounded,
+                        size: 38,
+                        color: AppColors.accentOrange,
                       ),
                     ),
                   ),

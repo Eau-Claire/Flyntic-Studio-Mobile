@@ -58,11 +58,15 @@ class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
+
+  void setSelectedIndex(int index) {
+    setState(() => _selectedIndex = index);
+  }
 
   final List<_NavItem> _navItems = const [
     _NavItem(
