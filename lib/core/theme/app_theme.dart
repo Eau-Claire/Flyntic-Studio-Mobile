@@ -42,6 +42,13 @@ class AppColors {
     return const Color(0xFFFF6B35);
   }
 
+  static Color get accentOrangeText {
+    if (currentTheme == ThemeType.monochrome) {
+      return isDark ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
+    }
+    return const Color(0xFFFFFFFF);
+  }
+
   static Color get accentAmber {
     if (currentTheme == ThemeType.monochrome) {
       return isDark ? const Color(0xFFE5E5E5) : const Color(0xFF262626);

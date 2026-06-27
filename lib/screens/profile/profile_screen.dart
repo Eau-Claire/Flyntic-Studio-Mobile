@@ -471,8 +471,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     context.findAncestorStateOfType<MainShellState>()?.setSelectedIndex(0);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF0F121F),
+                    backgroundColor: AppColors.textPrimary,
+                    foregroundColor: AppColors.bgPrimary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -528,7 +528,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Expanded(
                 child: TextField(
                   controller: _emailController,
-                  style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'Địa chỉ email mới',
                     hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
@@ -551,8 +551,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: _isUpdatingEmail ? null : _updateEmail,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.border,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: AppColors.border.withOpacity(0.5),
+                  foregroundColor: AppColors.textPrimary,
+                  disabledBackgroundColor: AppColors.border.withValues(alpha: 0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -560,7 +560,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
                 child: _isUpdatingEmail
-                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textPrimary))
                     : const Text('Cập nhật email', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             ],
@@ -582,7 +582,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: TextField(
                   controller: _passwordController,
                   obscureText: true,
-                  style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'Mật khẩu mới',
                     hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
@@ -605,8 +605,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: _isUpdatingPassword ? null : _updatePassword,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.border,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: AppColors.border.withOpacity(0.5),
+                  foregroundColor: AppColors.textPrimary,
+                  disabledBackgroundColor: AppColors.border.withValues(alpha: 0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -614,7 +614,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
                 child: _isUpdatingPassword
-                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textPrimary))
                     : const Text('Cập nhật mật khẩu', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             ],

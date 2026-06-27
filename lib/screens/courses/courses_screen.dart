@@ -389,7 +389,7 @@ class _CoursesScreenState extends State<CoursesScreen>
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.accentOrange,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.accentOrangeText,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
