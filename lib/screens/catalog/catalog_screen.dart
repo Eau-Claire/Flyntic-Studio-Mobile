@@ -479,9 +479,12 @@ class _FlynticLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = ThemeManager.instance.isDark;
+    final logoAsset = isDark ? 'assets/logo-white.png' : 'assets/logo-black.png';
+
     return Image.asset(
-      'assets/logo.png',
-      height: 32,
+      logoAsset,
+      height: 40,
       fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) => Container(
         width: 28,
