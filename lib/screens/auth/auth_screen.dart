@@ -253,21 +253,20 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
             
-            Align(
-              alignment: Alignment.topCenter,
+            Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 40), // Push down slightly from the status bar/back button
-                    
                     // Flyntic Logo
                     Container(
-                      height: 80,
+                      height: 100,
                       width: 280,
-                      alignment: Alignment.center,
+                      alignment: Alignment.bottomCenter,
                       child: OverflowBox(
+                        alignment: Alignment.bottomCenter,
                         minWidth: 340,
                         maxWidth: 340,
                         minHeight: 340,
@@ -294,7 +293,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Title
                     Text(
