@@ -261,38 +261,28 @@ class _AuthScreenState extends State<AuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Flyntic Logo
-                    Container(
-                      height: 60,
-                      width: 220,
-                      alignment: Alignment.center,
-                      child: OverflowBox(
-                        minWidth: 240,
-                        maxWidth: 240,
-                        minHeight: 240,
-                        maxHeight: 240,
-                        child: Image.asset(
-                          'assets/logo-removebg-preview.png',
-                          fit: BoxFit.contain,
-                          color: isDark ? Colors.white : null,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              gradient: AppColors.accentGradient,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.flight_takeoff_rounded,
-                              color: ThemeManager.instance.themeType == ThemeType.monochrome
-                                  ? AppColors.bgPrimary
-                                  : Colors.white,
-                              size: 24,
-                            ),
-                          ),
+                    Image.asset(
+                      'assets/flyntic.png',
+                      height: 64,
+                      fit: BoxFit.contain,
+                      color: isDark ? Colors.white : null,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: AppColors.accentGradient,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.flight_takeoff_rounded,
+                          color: ThemeManager.instance.themeType == ThemeType.monochrome
+                              ? AppColors.bgPrimary
+                              : Colors.white,
+                          size: 24,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Title
                     Text(
