@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/course.dart';
 import '../../repositories/course_repository.dart';
 import 'course_player_screen.dart';
+import '../../core/language/language_manager.dart';
 
 class MyLearningScreen extends StatefulWidget {
   const MyLearningScreen({super.key});
@@ -68,66 +69,96 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
 
   // Generate realistic modules based on course
   List<String> _getCourseModules(Course course) {
+    final isVi = LanguageManager.instance.isVietnamese;
     if (course.title.toLowerCase().contains('betaflight') || course.title.toLowerCase().contains('pid')) {
-      return [
-        'Module 1: Introduction to FPV & Safety',
-        'Module 2: Receiver Protocols & Motor Mapping',
-        'Module 3: PID Loop Tuning Principles',
-        'Module 4: Blackbox Log Analysis',
-        'Module 5: Rates, Filters & Advanced Tweaks',
-      ];
-    } else if (course.title.toLowerCase().contains('build') || course.title.toLowerCase().contains('assemble')) {
-      return [
-        'Module 1: Parts Selection & Compatibility Check',
-        'Module 2: Solder Techniques & Wiring Schematic',
-        'Module 3: Frame Assembly & Hardware Mounts',
-        'Module 4: ESC Calibration & Initial Power-up',
-        'Module 5: Pre-Flight Checklist & Maiden Flight',
-      ];
+      return isVi
+          ? [
+              'Chương 1: Giới thiệu về FPV & An toàn',
+              'Chương 2: Giao thức bộ thu & Sơ đồ motor',
+              'Chương 3: Nguyên lý tinh chỉnh PID Loop',
+              'Chương 4: Phân tích log Blackbox',
+              'Chương 5: Rates, Filters & Tinh chỉnh nâng cao',
+            ]
+          : [
+              'Module 1: Introduction to FPV & Safety',
+              'Module 2: Receiver Protocols & Motor Mapping',
+              'Module 3: PID Loop Tuning Principles',
+              'Module 4: Blackbox Log Analysis',
+              'Module 5: Rates, Filters & Advanced Tweaks',
+            ];
+    } else if (course.title.toLowerCase().contains('build') || course.title.toLowerCase().contains('assemble') || course.title.toLowerCase().contains('lắp ráp')) {
+      return isVi
+          ? [
+              'Chương 1: Chọn linh kiện & Kiểm tra tương thích',
+              'Chương 2: Kỹ thuật hàn & Sơ đồ đi dây',
+              'Chương 3: Lắp ráp khung & Gắn linh kiện',
+              'Chương 4: Cân chỉnh ESC & Khởi động lần đầu',
+              'Chương 5: Checklist trước khi bay & Chuyến bay đầu tiên',
+            ]
+          : [
+              'Module 1: Parts Selection & Compatibility Check',
+              'Module 2: Solder Techniques & Wiring Schematic',
+              'Module 3: Frame Assembly & Hardware Mounts',
+              'Module 4: ESC Calibration & Initial Power-up',
+              'Module 5: Pre-Flight Checklist & Maiden Flight',
+            ];
     } else {
-      return [
-        'Module 1: Welcome & Course Overview',
-        'Module 2: Core Hardware & Software Pre-requisites',
-        'Module 3: Step-by-Step Installation Guides',
-        'Module 4: Calibration, Configurations & Tests',
-        'Module 5: Advanced Workshop & Final Project Review',
-      ];
+      return isVi
+          ? [
+              'Chương 1: Chào mừng & Tổng quan khóa học',
+              'Chương 2: Phần cứng cốt lõi & Yêu cầu phần mềm',
+              'Chương 3: Hướng dẫn cài đặt từng bước',
+              'Chương 4: Hiệu chuẩn, cấu hình & Kiểm thử',
+              'Chương 5: Hội thảo nâng cao & Đánh giá dự án cuối khóa',
+            ]
+          : [
+              'Module 1: Welcome & Course Overview',
+              'Module 2: Core Hardware & Software Pre-requisites',
+              'Module 3: Step-by-Step Installation Guides',
+              'Module 4: Calibration, Configurations & Tests',
+              'Module 5: Advanced Workshop & Final Project Review',
+            ];
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgPrimary,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'My Learning',
-          style: AppTextStyles.headlineLarge.copyWith(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+    return ListenableBuilder(
+      listenable: LanguageManager.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bgPrimary,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Text(
+              LanguageManager.instance.translate('nav_courses'),
+              style: AppTextStyles.headlineLarge.copyWith(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
-        ),
-      ),
-      body: _isLoading
-          ? _buildLoader()
-          : _inProgressCourses.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  color: AppColors.accentOrange,
-                  backgroundColor: AppColors.bgCard,
-                  onRefresh: _loadInProgressCourses,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _inProgressCourses.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 20),
-                    itemBuilder: (context, index) {
-                      return _buildProgressCard(_inProgressCourses[index], index);
-                    },
-                  ),
-                ),
+          body: _isLoading
+              ? _buildLoader()
+              : _inProgressCourses.isEmpty
+                  ? _buildEmptyState()
+                  : RefreshIndicator(
+                      color: AppColors.accentOrange,
+                      backgroundColor: AppColors.bgCard,
+                      onRefresh: _loadInProgressCourses,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _inProgressCourses.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 20),
+                        itemBuilder: (context, index) {
+                          return _buildProgressCard(_inProgressCourses[index], index);
+                        },
+                      ),
+                    ),
+        );
+      },
     );
   }
 
@@ -140,6 +171,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
   }
 
   Widget _buildEmptyState() {
+    final isVi = LanguageManager.instance.isVietnamese;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -153,7 +185,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No courses in progress',
+              LanguageManager.instance.translate('no_courses_progress'),
               style: AppTextStyles.titleLarge.copyWith(
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
@@ -161,7 +193,9 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Enroll in a course from the Explore tab to start learning.',
+              isVi
+                  ? 'Đăng ký một khóa học ở phần Khóa học để bắt đầu học.'
+                  : 'Enroll in a course from the Explore tab to start learning.',
               textAlign: TextAlign.center,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
@@ -276,8 +310,10 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                         ),
                         child: Text(
                           course.duration != null && course.duration != '0 mins'
-                              ? course.duration!
-                              : '${course.lessonCount ?? 12} lessons',
+                              ? (LanguageManager.instance.isVietnamese
+                                  ? course.duration!.replaceAll('mins', 'phút').replaceAll('hours', 'giờ').replaceAll('hour', 'giờ')
+                                  : course.duration!)
+                              : '${course.lessonCount ?? 12} ${LanguageManager.instance.translate('course_lessons')}',
                           style: AppTextStyles.bodySmall.copyWith(fontSize: 10, fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -311,14 +347,16 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Course Progress',
+                        LanguageManager.instance.isVietnamese ? 'Tiến độ học tập' : 'Course Progress',
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        '$progressPct Completed',
+                        LanguageManager.instance.isVietnamese
+                            ? 'Đã hoàn thành $progressPct'
+                            : '$progressPct Completed',
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.accentOrange,
                           fontWeight: FontWeight.bold,
@@ -348,7 +386,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Modules',
+                    LanguageManager.instance.isVietnamese ? 'Nội dung' : 'Modules',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
@@ -410,7 +448,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                         ),
                       ),
                       child: Text(
-                        'Continue Learning',
+                        LanguageManager.instance.isVietnamese ? 'Tiếp tục học' : 'Continue Learning',
                         style: AppTextStyles.labelLarge.copyWith(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.bold,

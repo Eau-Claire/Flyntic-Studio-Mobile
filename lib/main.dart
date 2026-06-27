@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_manager.dart';
+import 'core/language/language_manager.dart';
 import 'core/supabase/supabase_config.dart';
 import 'screens/courses/courses_screen.dart';
 import 'screens/courses/my_learning_screen.dart';
@@ -14,6 +15,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await ThemeManager.instance.init();
+  await LanguageManager.instance.init();
 
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light.copyWith(
     statusBarColor: Colors.transparent,
@@ -40,7 +42,7 @@ class FlynticApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: ThemeManager.instance,
+      listenable: Listenable.merge([ThemeManager.instance, LanguageManager.instance]),
       builder: (context, _) {
         return MaterialApp(
           title: 'Flyntic - Learn Anything',

@@ -1,7 +1,11 @@
+import '../core/language/language_manager.dart';
+
 class Course {
   final String id;
-  final String title;
-  final String? description;
+  final String _title;
+  final String? titleVi;
+  final String? _description;
+  final String? descriptionVi;
   final String? thumbnail;
   final String? instructorName;
   final String? instructorAvatar;
@@ -25,8 +29,10 @@ class Course {
 
   const Course({
     required this.id,
-    required this.title,
-    this.description,
+    required String title,
+    this.titleVi,
+    String? description,
+    this.descriptionVi,
     this.thumbnail,
     this.instructorName,
     this.instructorAvatar,
@@ -47,7 +53,21 @@ class Course {
     this.tags,
     this.slug,
     this.requiredTier,
-  });
+  }) : _title = title, _description = description;
+
+  String get title {
+    if (LanguageManager.instance.isVietnamese && titleVi != null && titleVi!.isNotEmpty) {
+      return titleVi!;
+    }
+    return _title;
+  }
+
+  String? get description {
+    if (LanguageManager.instance.isVietnamese && descriptionVi != null && descriptionVi!.isNotEmpty) {
+      return descriptionVi!;
+    }
+    return _description;
+  }
 
   factory Course.fromMap(Map<String, dynamic> map) {
     final tier = map['required_tier']?.toString() ?? 'free';
@@ -56,7 +76,9 @@ class Course {
     return Course(
       id: map['id']?.toString() ?? '',
       title: map['title'] ?? map['name'] ?? 'Unknown Course',
-      description: map['description'] ?? map['description_vi'],
+      titleVi: map['title_vi'],
+      description: map['description'] ?? map['description_en'],
+      descriptionVi: map['description_vi'],
       thumbnail: map['thumbnail'] ?? map['thumbnail_url'] ?? map['image_url'] ?? map['cover_image'],
       instructorName: map['instructor_name'] ?? map['instructor']?['name'] ?? map['tutor']?['name'] ?? map['teacher']?['name'],
       instructorAvatar: map['instructor_avatar'] ?? map['instructor']?['avatar'] ?? map['tutor']?['avatar'],
@@ -95,30 +117,37 @@ class Course {
   }
 
   String get formattedPrice {
-    if (isFree == true || price == 0) return 'Free';
+    if (isFree == true || price == 0) return LanguageManager.instance.translate('price_free');
     final displayPrice = discountPrice ?? price;
     if (displayPrice == null) {
       if (requiredTier != null && requiredTier != 'free') {
-        if (requiredTier!.toLowerCase() == 'pro') return 'Premium';
+        if (requiredTier!.toLowerCase() == 'pro') return LanguageManager.instance.translate('price_premium');
         return '${requiredTier![0].toUpperCase()}${requiredTier!.substring(1)}';
       }
-      return 'Free';
+      return LanguageManager.instance.translate('price_free');
     }
-    if (displayPrice == 0) return 'Free';
+    if (displayPrice == 0) return LanguageManager.instance.translate('price_free');
     return '\$${displayPrice.toStringAsFixed(0)}';
   }
 
   String get formattedRating => rating?.toStringAsFixed(1) ?? '0.0';
   String get formattedStudents => _formatCount(studentCount ?? 0);
-  String get formattedLevel => _capitalizeLevel(level ?? 'All Levels');
+
+  String get formattedLevel {
+    final lvl = level?.toLowerCase() ?? 'all';
+    if (lvl.contains('begin')) {
+      return LanguageManager.instance.translate('level_beginner');
+    } else if (lvl.contains('intermed')) {
+      return LanguageManager.instance.translate('level_intermediate');
+    } else if (lvl.contains('advanc')) {
+      return LanguageManager.instance.translate('level_advanced');
+    }
+    return LanguageManager.instance.translate('level_all');
+  }
 
   static String _formatCount(int count) {
     if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M';
     if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}K';
     return count.toString();
-  }
-
-  static String _capitalizeLevel(String level) {
-    return level.split('_').map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
   }
 }

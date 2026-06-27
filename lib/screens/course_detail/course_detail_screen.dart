@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_manager.dart';
+import '../../core/language/language_manager.dart';
 import '../../models/course.dart';
 import '../../widgets/buttons.dart';
 import '../courses/course_player_screen.dart';
@@ -36,42 +37,47 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgPrimary,
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildCategoryTag(),
-                  const SizedBox(height: 10),
-                  _buildTitle(),
-                  const SizedBox(height: 12),
-                  _buildStats(),
-                  if (widget.course.instructorName != null) ...[
-                    const SizedBox(height: 16),
-                    _buildInstructor(),
-                  ],
-                  const SizedBox(height: 20),
-                  Divider(color: AppColors.border),
-                  const SizedBox(height: 20),
-                  if (widget.course.description != null) ...[
-                    _buildSection('About This Course', widget.course.description!),
-                    const SizedBox(height: 24),
-                  ],
-                  _buildCourseInfo(),
-                  const SizedBox(height: 100),
-                ],
+    return ListenableBuilder(
+      listenable: Listenable.merge([LanguageManager.instance, ThemeManager.instance]),
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bgPrimary,
+          body: CustomScrollView(
+            slivers: [
+              _buildSliverAppBar(),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildCategoryTag(),
+                      const SizedBox(height: 10),
+                      _buildTitle(),
+                      const SizedBox(height: 12),
+                      _buildStats(),
+                      if (widget.course.instructorName != null) ...[
+                        const SizedBox(height: 16),
+                        _buildInstructor(),
+                      ],
+                      const SizedBox(height: 20),
+                      Divider(color: AppColors.border),
+                      const SizedBox(height: 20),
+                      if (widget.course.description != null) ...[
+                        _buildSection(LanguageManager.instance.translate('about_course'), widget.course.description!),
+                        const SizedBox(height: 24),
+                      ],
+                      _buildCourseInfo(),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomBar(),
+          bottomNavigationBar: _buildBottomBar(),
+        );
+      },
     );
   }
 
@@ -226,13 +232,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       children: [
         if (widget.course.rating != null)
           _buildStatItem(Icons.star_rounded, AppColors.accentGold,
-              '${widget.course.formattedRating} Rating'),
+              '${widget.course.formattedRating} ${LanguageManager.instance.translate('stat_rating')}'),
         if (widget.course.studentCount != null)
           _buildStatItem(Icons.people_outline_rounded, AppColors.info,
-              '${widget.course.formattedStudents} Students'),
+              '${widget.course.formattedStudents} ${LanguageManager.instance.translate('stat_students')}'),
         if (widget.course.lessonCount != null)
           _buildStatItem(Icons.play_circle_outline_rounded, AppColors.accentOrange,
-              '${widget.course.lessonCount} Lessons'),
+              '${widget.course.lessonCount} ${LanguageManager.instance.translate('stat_lessons')}'),
         if (widget.course.duration != null)
           _buildStatItem(Icons.access_time_rounded, AppColors.success,
               widget.course.duration!),
@@ -281,7 +287,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Instructor', style: AppTextStyles.bodySmall),
+                Text(LanguageManager.instance.translate('instructor'), style: AppTextStyles.bodySmall),
                 Text(
                   widget.course.instructorName!,
                   style: AppTextStyles.titleMedium,
@@ -295,7 +301,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               border: Border.all(color: AppColors.borderLight),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text('Profile', style: AppTextStyles.bodySmall),
+            child: Text(LanguageManager.instance.translate('profile_btn'), style: AppTextStyles.bodySmall),
           ),
         ],
       ),
@@ -317,7 +323,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Course Information', style: AppTextStyles.headlineMedium),
+        Text(LanguageManager.instance.translate('course_info'), style: AppTextStyles.headlineMedium),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
@@ -328,16 +334,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           child: Column(
             children: [
               if (widget.course.level != null)
-                _buildInfoRow(Icons.signal_cellular_alt_rounded, 'Level',
+                _buildInfoRow(Icons.signal_cellular_alt_rounded, LanguageManager.instance.translate('level_label'),
                     widget.course.formattedLevel, true),
               if (widget.course.lessonCount != null)
-                _buildInfoRow(Icons.play_circle_outline_rounded, 'Lessons',
-                    '${widget.course.lessonCount} lessons', widget.course.level != null),
+                _buildInfoRow(Icons.play_circle_outline_rounded, LanguageManager.instance.translate('lessons_label'),
+                    '${widget.course.lessonCount} ${LanguageManager.instance.translate('course_lessons')}', widget.course.level != null),
               if (widget.course.duration != null)
-                _buildInfoRow(Icons.access_time_rounded, 'Duration',
+                _buildInfoRow(Icons.access_time_rounded, LanguageManager.instance.translate('duration_label'),
                     widget.course.duration!, widget.course.lessonCount != null),
               if (widget.course.tags != null && widget.course.tags!.isNotEmpty)
-                _buildInfoRow(Icons.label_outline_rounded, 'Topics',
+                _buildInfoRow(Icons.label_outline_rounded, LanguageManager.instance.translate('topics_label'),
                     widget.course.tags!.take(3).join(', '), widget.course.duration != null),
             ],
           ),
@@ -386,7 +392,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Price', style: AppTextStyles.bodySmall),
+              Text(LanguageManager.instance.translate('price'), style: AppTextStyles.bodySmall),
               Text(
                 widget.course.formattedPrice,
                 style: AppTextStyles.displayMedium.copyWith(
@@ -401,7 +407,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: GradientButton(
-              label: _isEnrolled ? 'Go to Course' : 'Enroll Now',
+              label: _isEnrolled
+                  ? LanguageManager.instance.translate('go_to_course')
+                  : LanguageManager.instance.translate('enroll_now'),
               icon: _isEnrolled ? Icons.arrow_forward_rounded : Icons.school_rounded,
               isLoading: _isLoading,
               onPressed: _isEnrolled ? _openCourse : _handleEnroll,
@@ -427,7 +435,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please sign in to enroll in courses'),
+          content: Text(LanguageManager.instance.translate('sign_in_to_enroll')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -465,7 +473,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 const Icon(Icons.check_circle_rounded, color: Colors.white),
                 const SizedBox(width: 10),
                 Text(
-                  _isEnrolled ? 'Successfully enrolled!' : 'Unenrolled',
+                  _isEnrolled
+                      ? LanguageManager.instance.translate('enrolled_success')
+                      : LanguageManager.instance.translate('unregistered_success'),
                   style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
                 ),
               ],
@@ -481,7 +491,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update enrollment: $e'),
+            content: Text('${LanguageManager.instance.translate('enroll_failed')}: $e'),
             backgroundColor: AppColors.error,
           ),
         );

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_manager.dart';
+import '../../core/language/language_manager.dart';
 import '../../models/course.dart';
 import '../../repositories/course_repository.dart';
 import '../../widgets/course_card.dart';
@@ -39,12 +40,7 @@ class _CoursesScreenState extends State<CoursesScreen>
   final ScrollController _scrollController = ScrollController();
   final ScrollController _featuredScrollController = ScrollController();
 
-  final List<Map<String, String>> _levels = [
-    {'key': 'all', 'label': 'All Levels'},
-    {'key': 'beginner', 'label': 'Beginner'},
-    {'key': 'intermediate', 'label': 'Intermediate'},
-    {'key': 'advanced', 'label': 'Advanced'},
-  ];
+
 
   @override
   void reassemble() {
@@ -172,9 +168,12 @@ class _CoursesScreenState extends State<CoursesScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgPrimary,
-      body: SafeArea(
+    return ListenableBuilder(
+      listenable: LanguageManager.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bgPrimary,
+          body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
             await _loadFeaturedCourses();
@@ -204,6 +203,8 @@ class _CoursesScreenState extends State<CoursesScreen>
           ),
         ),
       ),
+        );
+      },
     );
   }
 
@@ -214,8 +215,12 @@ class _CoursesScreenState extends State<CoursesScreen>
     
     // Format date: e.g. "Today 25 Nov."
     final now = DateTime.now();
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    final dateString = "Today ${now.day} ${months[now.month - 1]}.";
+    final monthsVi = ['Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6', 'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12'];
+    final monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final isVi = LanguageManager.instance.isVietnamese;
+    final monthStr = isVi ? monthsVi[now.month - 1] : monthsEn[now.month - 1];
+    final todayStr = LanguageManager.instance.translate('today');
+    final dateString = isVi ? "$todayStr, ngày ${now.day} $monthStr" : "$todayStr, ${now.day} $monthStr";
 
     return Row(
       children: [
@@ -225,7 +230,7 @@ class _CoursesScreenState extends State<CoursesScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hello, $displayName',
+                '${LanguageManager.instance.translate("hello_greeting")}, $displayName',
                 style: AppTextStyles.headlineLarge.copyWith(
                   fontWeight: FontWeight.w800,
                   fontSize: 20,
@@ -271,7 +276,7 @@ class _CoursesScreenState extends State<CoursesScreen>
             _onSearch(val);
           },
           decoration: InputDecoration(
-            hintText: 'Search courses, skills, categories...',
+            hintText: LanguageManager.instance.translate('search_hint'),
             hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 16, right: 10),
@@ -340,7 +345,7 @@ class _CoursesScreenState extends State<CoursesScreen>
                                 border: Border.all(color: AppColors.accentOrange.withValues(alpha: 0.3)),
                               ),
                               child: Text(
-                                'RECOMMENDED',
+                                LanguageManager.instance.translate('recommended'),
                                 style: AppTextStyles.bodySmall.copyWith(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
@@ -372,7 +377,7 @@ class _CoursesScreenState extends State<CoursesScreen>
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Download our ultimate desktop editor for drone block-programming, hardware flashing & real-time simulations.',
+                          LanguageManager.instance.translate('ad_ide_description'),
                           style: AppTextStyles.bodyMedium.copyWith(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -398,12 +403,12 @@ class _CoursesScreenState extends State<CoursesScreen>
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(Icons.download_rounded, size: 16),
-                              SizedBox(width: 8),
+                            children: [
+                              const Icon(Icons.download_rounded, size: 16),
+                              const SizedBox(width: 8),
                               Text(
-                                'Download IDE',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                LanguageManager.instance.translate('download_ide'),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                               ),
                             ],
                           ),
@@ -447,7 +452,7 @@ class _CoursesScreenState extends State<CoursesScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Featured Courses',
+              LanguageManager.instance.translate('featured_courses'),
               style: AppTextStyles.headlineLarge.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -528,7 +533,7 @@ class _CoursesScreenState extends State<CoursesScreen>
                     ),
                     child: Center(
                       child: Text(
-                        'No featured courses available',
+                        LanguageManager.instance.translate('no_courses_found'),
                         style: AppTextStyles.bodyMedium,
                       ),
                     ),
@@ -564,7 +569,7 @@ class _CoursesScreenState extends State<CoursesScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Explore All Courses',
+              LanguageManager.instance.translate('explore_all'),
               style: AppTextStyles.headlineLarge.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -599,7 +604,7 @@ class _CoursesScreenState extends State<CoursesScreen>
                     ),
                     child: Center(
                       child: Text(
-                        'No courses found for this level',
+                        LanguageManager.instance.translate('no_courses_found'),
                         style: AppTextStyles.bodyMedium,
                       ),
                     ),
@@ -650,7 +655,7 @@ class _CoursesScreenState extends State<CoursesScreen>
             ),
             const SizedBox(width: 8),
             Text(
-              'Search Results',
+              LanguageManager.instance.translate('search_results'),
               style: AppTextStyles.headlineLarge.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
@@ -670,8 +675,8 @@ class _CoursesScreenState extends State<CoursesScreen>
             : _allCourses.isEmpty
                 ? _buildEmptyState(
                     icon: Icons.search_off_rounded,
-                    title: 'No courses found',
-                    subtitle: 'Try another search keyword',
+                    title: LanguageManager.instance.translate('no_courses_found'),
+                    subtitle: LanguageManager.instance.translate('try_another_keyword'),
                   )
                 : ListView.separated(
                     shrinkWrap: true,
@@ -815,15 +820,22 @@ class _CoursesScreenState extends State<CoursesScreen>
 
 
   Widget _buildLevelFilter() {
+    final levels = [
+      {'key': 'all', 'label': LanguageManager.instance.translate('level_all')},
+      {'key': 'beginner', 'label': LanguageManager.instance.translate('level_beginner')},
+      {'key': 'intermediate', 'label': LanguageManager.instance.translate('level_intermediate')},
+      {'key': 'advanced', 'label': LanguageManager.instance.translate('level_advanced')},
+    ];
+
     return SizedBox(
       height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: _levels.length,
+        itemCount: levels.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final level = _levels[index];
+          final level = levels[index];
           final isSelected = _selectedLevel == level['key'];
           return AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -860,14 +872,14 @@ class _CoursesScreenState extends State<CoursesScreen>
 
   Widget _buildSortButton() {
     final sortOptions = [
-      {'key': 'created_at', 'label': 'Newest', 'ascending': false},
-      {'key': 'title', 'label': 'A-Z', 'ascending': true},
-      {'key': 'duration_minutes', 'label': 'Duration', 'ascending': true},
+      {'key': 'created_at', 'label': LanguageManager.instance.translate('sort_newest'), 'ascending': false},
+      {'key': 'title', 'label': LanguageManager.instance.translate('sort_az'), 'ascending': true},
+      {'key': 'duration_minutes', 'label': LanguageManager.instance.translate('sort_duration'), 'ascending': true},
     ];
 
     return PopupMenuButton<Map<String, dynamic>>(
       icon: Icon(Icons.sort_rounded, color: AppColors.textPrimary, size: 20),
-      tooltip: 'Sort courses',
+      tooltip: LanguageManager.instance.translate('sort_courses'),
       color: AppColors.bgCard,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onSelected: (option) {

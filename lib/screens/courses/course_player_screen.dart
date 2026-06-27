@@ -6,6 +6,8 @@ import '../../core/theme/app_theme.dart';
 import '../../models/course.dart';
 import '../../models/course_module.dart';
 import '../../repositories/course_repository.dart';
+import '../../core/language/language_manager.dart';
+import '../../core/theme/theme_manager.dart';
 
 class CoursePlayerScreen extends StatefulWidget {
   final Course course;
@@ -110,59 +112,64 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> with SingleTick
   Widget build(BuildContext context) {
     final activeModule = _modules.isNotEmpty ? _modules[_currentModuleIndex] : null;
 
-    return Scaffold(
-      backgroundColor: AppColors.bgPrimary,
-      appBar: AppBar(
-        backgroundColor: AppColors.bgSecondary,
-        elevation: 0,
-        title: Text(
-          widget.course.title,
-          style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _modules.isEmpty
-              ? _buildEmptyState()
-              : Column(
-                  children: [
-                    // Video Player Area
-                    _buildPlayerSection(activeModule),
-                    
-                    // Segmented Tabs
-                    Container(
-                      color: AppColors.bgSecondary,
-                      child: TabBar(
-                        controller: _tabController,
-                        indicatorColor: AppColors.accentOrange,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        labelStyle: AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.bold, fontSize: 14),
-                        labelColor: Colors.white,
-                        unselectedLabelColor: AppColors.textMuted,
-                        dividerColor: AppColors.border,
-                        tabs: const [
-                          Tab(text: 'Lesson Content'),
-                          Tab(text: 'Syllabus'),
-                        ],
-                      ),
+    return ListenableBuilder(
+      listenable: Listenable.merge([LanguageManager.instance, ThemeManager.instance]),
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bgPrimary,
+          appBar: AppBar(
+            backgroundColor: AppColors.bgSecondary,
+            elevation: 0,
+            title: Text(
+              widget.course.title,
+              style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+            ),
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary, size: 20),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          body: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _modules.isEmpty
+                  ? _buildEmptyState()
+                  : Column(
+                      children: [
+                        // Video Player Area
+                        _buildPlayerSection(activeModule),
+                        
+                        // Segmented Tabs
+                        Container(
+                          color: AppColors.bgSecondary,
+                          child: TabBar(
+                            controller: _tabController,
+                            indicatorColor: AppColors.accentOrange,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            labelStyle: AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.bold, fontSize: 14),
+                            labelColor: AppColors.textPrimary,
+                            unselectedLabelColor: AppColors.textMuted,
+                            dividerColor: AppColors.border,
+                            tabs: [
+                              Tab(text: LanguageManager.instance.translate('lesson_content')),
+                              Tab(text: LanguageManager.instance.translate('syllabus')),
+                            ],
+                          ),
+                        ),
+                        
+                        // Tab Contents
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildContentTab(activeModule),
+                              _buildSyllabusTab(),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    
-                    // Tab Contents
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildContentTab(activeModule),
-                          _buildSyllabusTab(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+        );
+      },
     );
   }
 
@@ -192,7 +199,7 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> with SingleTick
               Icon(Icons.video_library_rounded, color: AppColors.accentGold, size: 48),
               const SizedBox(height: 12),
               Text(
-                'No video for this lesson',
+                LanguageManager.instance.translate('no_video'),
                 style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
               ),
             ],
@@ -227,7 +234,7 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> with SingleTick
                 border: Border.all(color: AppColors.border),
               ),
               child: Text(
-                'Lesson ${module.order}',
+                '${LanguageManager.instance.translate('lesson_number')} ${module.order}',
                 style: AppTextStyles.labelLarge.copyWith(color: AppColors.accentOrange, fontSize: 11),
               ),
             ),
@@ -321,12 +328,12 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> with SingleTick
           Icon(Icons.video_library_rounded, color: AppColors.textMuted, size: 64),
           const SizedBox(height: 16),
           Text(
-            'No lessons available yet',
+            LanguageManager.instance.translate('no_lessons_yet'),
             style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            'We are preparing the course material.',
+            LanguageManager.instance.translate('preparing_material'),
             style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
           ),
         ],

@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_manager.dart';
+import '../../core/language/language_manager.dart';
 import '../../models/course.dart';
 
 class CourseCard extends StatefulWidget {
@@ -48,49 +49,54 @@ class _CourseCardState extends State<CourseCard>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scaleAnimation,
-      builder: (context, child) => Transform.scale(
-        scale: _scaleAnimation.value,
-        child: child,
-      ),
-      child: GestureDetector(
-        onTapDown: (_) => _controller.forward(),
-        onTapUp: (_) {
-          _controller.reverse();
-          widget.onTap?.call();
-        },
-        onTapCancel: () => _controller.reverse(),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: AppColors.cardGradient,
-            border: Border.all(
-              color: AppColors.border,
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    return ListenableBuilder(
+      listenable: LanguageManager.instance,
+      builder: (context, _) {
+        return AnimatedBuilder(
+          animation: _scaleAnimation,
+          builder: (context, child) => Transform.scale(
+            scale: _scaleAnimation.value,
+            child: child,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: widget.noImage
-                ? _buildNoImageContent()
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildThumbnail(),
-                      Expanded(child: _buildContent()),
-                    ],
+          child: GestureDetector(
+            onTapDown: (_) => _controller.forward(),
+            onTapUp: (_) {
+              _controller.reverse();
+              widget.onTap?.call();
+            },
+            onTapCancel: () => _controller.reverse(),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: AppColors.cardGradient,
+                border: Border.all(
+                  color: AppColors.border,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: widget.noImage
+                    ? _buildNoImageContent()
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildThumbnail(),
+                          Expanded(child: _buildContent()),
+                        ],
+                      ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -127,7 +133,7 @@ class _CourseCardState extends State<CourseCard>
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  '★ Featured',
+                  LanguageManager.instance.translate('featured_badge'),
                   style: AppTextStyles.bodySmall.copyWith(
                     color: ThemeManager.instance.themeType == ThemeType.monochrome
                         ? AppColors.bgPrimary
@@ -287,7 +293,10 @@ class _CourseCardState extends State<CourseCard>
               size: 40,
             ),
             const SizedBox(height: 6),
-            Text('Course', style: AppTextStyles.bodySmall),
+            Text(
+              LanguageManager.instance.translate('course_placeholder'),
+              style: AppTextStyles.bodySmall,
+            ),
           ],
         ),
       ),
@@ -365,7 +374,7 @@ class _CourseCardState extends State<CourseCard>
             child: Text(
               (widget.course.description != null && widget.course.description!.isNotEmpty)
                   ? widget.course.description!
-                  : 'Master the core concepts and advanced techniques in this comprehensive course.',
+                  : LanguageManager.instance.translate('default_description'),
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textSecondary,
                 fontSize: 11,

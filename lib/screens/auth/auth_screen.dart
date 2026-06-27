@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_manager.dart';
+import '../../core/language/language_manager.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -33,20 +34,20 @@ class _AuthScreenState extends State<AuthScreen> {
     final confirmPass = _confirmPassCtrl.text.trim();
 
     if (email.isEmpty) {
-      _showError('Vui lòng nhập địa chỉ email');
+      _showError(LanguageManager.instance.translate('email_empty'));
       return;
     }
     if (pass.isEmpty) {
-      _showError('Vui lòng nhập mật khẩu');
+      _showError(LanguageManager.instance.translate('pass_empty'));
       return;
     }
     if (!_isLogin) {
       if (confirmPass.isEmpty) {
-        _showError('Vui lòng xác nhận mật khẩu');
+        _showError(LanguageManager.instance.translate('confirm_pass_empty'));
         return;
       }
       if (pass != confirmPass) {
-        _showError('Mật khẩu xác nhận không trùng khớp!');
+        _showError(LanguageManager.instance.translate('pass_mismatch'));
         return;
       }
     }
@@ -66,7 +67,7 @@ class _AuthScreenState extends State<AuthScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Đăng ký thành công! Vui lòng đăng nhập.'),
+              content: Text(LanguageManager.instance.translate('signup_success')),
               backgroundColor: AppColors.success,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -218,7 +219,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 )
               : Text(
-                  _isLogin ? 'Sign In' : 'Sign up',
+                  _isLogin
+                      ? LanguageManager.instance.translate('signin_btn')
+                      : LanguageManager.instance.translate('signup_btn'),
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -229,13 +232,60 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  Widget _buildLanguageSwitcher() {
+    final isVi = LanguageManager.instance.isVietnamese;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            LanguageManager.instance.setLanguage(
+              isVi ? Language.en : Language.vi,
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.language_rounded,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isVi ? 'VI' : 'EN',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = ThemeManager.instance.isDark;
 
-    return Scaffold(
-      backgroundColor: AppColors.bgPrimary,
-      body: SafeArea(
+    return ListenableBuilder(
+      listenable: LanguageManager.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bgPrimary,
+          body: SafeArea(
         child: Stack(
           children: [
             // Back button at top-left for Sign Up screen
@@ -252,6 +302,13 @@ class _AuthScreenState extends State<AuthScreen> {
                   },
                 ),
               ),
+            
+            // Language Switcher at top-right
+            Positioned(
+              top: 10,
+              right: 10,
+              child: _buildLanguageSwitcher(),
+            ),
             
             Center(
               child: SingleChildScrollView(
@@ -297,7 +354,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
                     // Title
                     Text(
-                      _isLogin ? 'Login to your Account' : 'Create your Account',
+                      _isLogin
+                          ? LanguageManager.instance.translate('login_title')
+                          : LanguageManager.instance.translate('signup_title'),
                       style: AppTextStyles.headlineMedium.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
@@ -313,7 +372,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         // Email Field
                         _buildInputField(
                           controller: _emailCtrl,
-                          hintText: 'Email',
+                          hintText: LanguageManager.instance.translate('email_hint'),
                           keyboardType: TextInputType.emailAddress,
                           isDark: isDark,
                         ),
@@ -322,7 +381,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         // Password Field
                         _buildInputField(
                           controller: _passCtrl,
-                          hintText: 'Password',
+                          hintText: LanguageManager.instance.translate('password_hint'),
                           obscureText: _obscurePass,
                           isPassword: true,
                           isDark: isDark,
@@ -336,7 +395,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           const SizedBox(height: 16),
                           _buildInputField(
                             controller: _confirmPassCtrl,
-                            hintText: 'Confirm Password',
+                            hintText: LanguageManager.instance.translate('confirm_password_hint'),
                             obscureText: _obscureConfirmPass,
                             isPassword: true,
                             isDark: isDark,
@@ -363,15 +422,17 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: RichText(
                         text: TextSpan(
                           text: _isLogin
-                              ? "Don't have an account? "
-                              : 'Already have an account? ',
+                              ? LanguageManager.instance.translate('no_account')
+                              : LanguageManager.instance.translate('already_account'),
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
                           children: [
                             TextSpan(
-                              text: _isLogin ? 'Sign up' : 'Sign In',
+                              text: _isLogin
+                                  ? LanguageManager.instance.translate('signup_btn')
+                                  : LanguageManager.instance.translate('signin_btn'),
                               style: TextStyle(
                                 color: ThemeManager.instance.themeType == ThemeType.monochrome
                                     ? AppColors.textPrimary
@@ -390,6 +451,8 @@ class _AuthScreenState extends State<AuthScreen> {
           ],
         ),
       ),
+        );
+      },
     );
   }
 }

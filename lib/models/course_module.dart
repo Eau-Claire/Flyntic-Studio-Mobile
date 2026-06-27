@@ -1,3 +1,5 @@
+import '../core/language/language_manager.dart';
+
 class CourseModule {
   final String id;
   final String courseId;
@@ -38,6 +40,17 @@ class CourseModule {
     );
   }
 
-  String get displayTitle => title;
-  String get displayContent => content ?? '';
+  String get displayTitle {
+    if (LanguageManager.instance.isVietnamese && titleVi != null && titleVi!.isNotEmpty) {
+      return titleVi!;
+    }
+    return title;
+  }
+
+  String get displayContent {
+    if (LanguageManager.instance.isVietnamese && contentVi != null && contentVi!.isNotEmpty) {
+      return contentVi!;
+    }
+    return content ?? '';
+  }
 }

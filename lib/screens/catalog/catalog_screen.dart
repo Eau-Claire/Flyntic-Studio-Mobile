@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_manager.dart';
+import '../../core/language/language_manager.dart';
 import '../../models/drone_build.dart';
 import '../../repositories/drone_build_repository.dart';
 import 'drone_build_detail_screen.dart';
@@ -108,39 +109,51 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgPrimary,
-      appBar: AppBar(
-        backgroundColor: AppColors.bgPrimary,
-        title: Row(
-          children: [
-            _FlynticLogo(),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                gradient: AppColors.accentGradient,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Builds Catalog',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: ThemeManager.instance.themeType == ThemeType.monochrome
-                      ? AppColors.bgPrimary
-                      : Colors.white,
-                  fontWeight: FontWeight.w600,
+    return ListenableBuilder(
+      listenable: LanguageManager.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bgPrimary,
+          appBar: AppBar(
+            backgroundColor: AppColors.bgPrimary,
+            title: Row(
+              children: [
+                Text(
+                  LanguageManager.instance.translate('nav_catalog'),
+                  style: AppTextStyles.headlineLarge.copyWith(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.accentGradient,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    LanguageManager.instance.translate('catalog_title'),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: ThemeManager.instance.themeType == ThemeType.monochrome
+                          ? AppColors.bgPrimary
+                          : Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          _buildFilterTabs(),
-          Expanded(child: _buildCatalogPanel()),
-        ],
-      ),
+          ),
+          body: Column(
+            children: [
+              _buildFilterTabs(),
+              Expanded(child: _buildCatalogPanel()),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -184,7 +197,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    level['label'],
+                    LanguageManager.instance.translate('level_${level['key']}'),
                     style: AppTextStyles.bodySmall.copyWith(
                       color: isSelected
                           ? (ThemeManager.instance.themeType == ThemeType.monochrome
@@ -214,10 +227,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   Widget _buildPanelHeader() {
-    final activeLabel = _difficultyLevels.firstWhere(
+    final activeKey = _difficultyLevels.firstWhere(
       (l) => l['key'] == _selectedDifficulty,
       orElse: () => _difficultyLevels.first,
-    )['label'];
+    )['key'] as String;
+    final activeLabel = LanguageManager.instance.translate('level_$activeKey');
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
@@ -234,8 +248,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
           const SizedBox(height: 2),
           Text(
             _builds.isEmpty && !_isLoading
-                ? 'No builds found'
-                : '${_builds.length}${_hasMore ? '+' : ''} drone models available',
+                ? (LanguageManager.instance.isVietnamese ? 'Không tìm thấy thiết bị nào' : 'No builds found')
+                : (LanguageManager.instance.isVietnamese
+                    ? 'Có ${_builds.length}${_hasMore ? '+' : ''} mẫu drone'
+                    : '${_builds.length}${_hasMore ? '+' : ''} drone models available'),
             style: AppTextStyles.bodySmall,
           ),
         ],
@@ -334,116 +350,125 @@ class _HorizontalDroneBuildCardState extends State<_HorizontalDroneBuildCard>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scale,
-      builder: (_, child) => Transform.scale(scale: _scale.value, child: child),
-      child: GestureDetector(
-        onTapDown: (_) => _ctrl.forward(),
-        onTapUp: (_) {
-          _ctrl.reverse();
-          widget.onTap?.call();
-        },
-        onTapCancel: () => _ctrl.reverse(),
-        child: Container(
-          height: 110,
-          decoration: BoxDecoration(
-            gradient: AppColors.cardGradient,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)),
-                child: SizedBox(
-                  width: 110,
-                  height: 110,
-                  child: widget.build.thumbnailUrl.isNotEmpty
-                      ? Image.network(
-                          widget.build.thumbnailUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _placeholder(),
-                        )
-                      : _placeholder(),
-                ),
+    return ListenableBuilder(
+      listenable: LanguageManager.instance,
+      builder: (context, _) {
+        return AnimatedBuilder(
+          animation: _scale,
+          builder: (_, child) => Transform.scale(scale: _scale.value, child: child),
+          child: GestureDetector(
+            onTapDown: (_) => _ctrl.forward(),
+            onTapUp: (_) {
+              _ctrl.reverse();
+              widget.onTap?.call();
+            },
+            onTapCancel: () => _ctrl.reverse(),
+            child: Container(
+              height: 110,
+              decoration: BoxDecoration(
+                gradient: AppColors.cardGradient,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)),
+                    child: SizedBox(
+                      width: 110,
+                      height: 110,
+                      child: widget.build.thumbnailUrl.isNotEmpty
+                          ? Image.network(
+                              widget.build.thumbnailUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _placeholder(),
+                            )
+                          : _placeholder(),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentOrange.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              widget.build.formattedDifficulty,
-                              style: AppTextStyles.accent.copyWith(
-                                fontSize: 9,
-                                color: AppColors.accentOrange,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          if (widget.build.flightTime.isNotEmpty)
-                            Row(
-                              children: [
-                                Icon(Icons.timer_rounded, color: AppColors.textMuted, size: 10),
-                                const SizedBox(width: 2),
-                                Text(
-                                  widget.build.flightTime,
-                                  style: AppTextStyles.bodySmall.copyWith(fontSize: 9),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accentOrange.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
-                              ],
-                            ),
-                        ],
-                      ),
-                      Text(
-                        widget.build.name,
-                        style: AppTextStyles.titleMedium.copyWith(fontSize: 14, fontWeight: FontWeight.bold),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Row(
-                        children: [
-                          Icon(Icons.flight_takeoff_rounded, color: AppColors.textMuted, size: 12),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              widget.build.useCase.isNotEmpty ? widget.build.useCase : 'Custom Drone Build',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                fontSize: 10,
-                                color: AppColors.textMuted,
+                                child: Text(
+                                  LanguageManager.instance.translate('difficulty_${widget.build.difficulty}'),
+                                  style: AppTextStyles.accent.copyWith(
+                                    fontSize: 9,
+                                    color: AppColors.accentOrange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              if (widget.build.flightTime.isNotEmpty)
+                                Row(
+                                  children: [
+                                    Icon(Icons.timer_rounded, color: AppColors.textMuted, size: 10),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      LanguageManager.instance.isVietnamese
+                                          ? widget.build.flightTime.replaceAll('mins', 'phút').replaceAll('hours', 'giờ').replaceAll('hour', 'giờ')
+                                          : widget.build.flightTime,
+                                      style: AppTextStyles.bodySmall.copyWith(fontSize: 9),
+                                    ),
+                                  ],
+                                ),
+                            ],
                           ),
                           Text(
-                            widget.build.formattedCost,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.accentGold,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
+                            widget.build.name,
+                            style: AppTextStyles.titleMedium.copyWith(fontSize: 14, fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Row(
+                            children: [
+                              Icon(Icons.flight_takeoff_rounded, color: AppColors.textMuted, size: 12),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  widget.build.useCase.isNotEmpty
+                                      ? widget.build.useCase
+                                      : LanguageManager.instance.translate('custom_drone_build'),
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    fontSize: 10,
+                                    color: AppColors.textMuted,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                widget.build.formattedCost,
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.accentGold,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -474,43 +499,4 @@ class _HorizontalBuildShimmer extends StatelessWidget {
   }
 }
 
-class _FlynticLogo extends StatelessWidget {
-  const _FlynticLogo();
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = ThemeManager.instance.isDark;
-
-    return Container(
-      width: 140,
-      height: 44,
-      alignment: Alignment.centerLeft,
-      child: OverflowBox(
-        minWidth: 190,
-        maxWidth: 190,
-        minHeight: 190,
-        maxHeight: 190,
-        child: Image.asset(
-          'assets/flyntic.png',
-          fit: BoxFit.contain,
-          color: isDark ? Colors.white : null,
-          errorBuilder: (context, error, stackTrace) => Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              gradient: AppColors.accentGradient,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.flight_takeoff_rounded,
-              color: ThemeManager.instance.themeType == ThemeType.monochrome
-                  ? AppColors.bgPrimary
-                  : Colors.white,
-              size: 16,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

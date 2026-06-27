@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/theme_manager.dart';
+import '../../core/language/language_manager.dart';
 import '../../models/drone_build.dart';
 
 class DroneBuildDetailScreen extends StatefulWidget {
@@ -30,9 +32,12 @@ class _DroneBuildDetailScreenState extends State<DroneBuildDetailScreen>
   @override
   Widget build(BuildContext context) {
     final buildItem = widget.build;
-    return Scaffold(
-      backgroundColor: AppColors.bgPrimary,
-      body: NestedScrollView(
+    return ListenableBuilder(
+      listenable: Listenable.merge([LanguageManager.instance, ThemeManager.instance]),
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bgPrimary,
+          body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
@@ -98,7 +103,9 @@ class _DroneBuildDetailScreenState extends State<DroneBuildDetailScreen>
                             child: Text(
                               buildItem.formattedDifficulty,
                               style: AppTextStyles.labelLarge.copyWith(
-                                color: Colors.white,
+                                color: ThemeManager.instance.themeType == ThemeType.monochrome
+                                    ? AppColors.accentOrangeText
+                                    : Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 10,
                               ),
@@ -137,12 +144,12 @@ class _DroneBuildDetailScreenState extends State<DroneBuildDetailScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatItem(Icons.payments_rounded, 'Est. Cost', buildItem.formattedCost),
+                    _buildStatItem(Icons.payments_rounded, LanguageManager.instance.translate('est_cost'), buildItem.formattedCost),
                     _buildDivider(),
-                    _buildStatItem(Icons.timer_rounded, 'Flight Time',
+                    _buildStatItem(Icons.timer_rounded, LanguageManager.instance.translate('flight_time'),
                         buildItem.flightTime.isNotEmpty ? buildItem.flightTime : 'N/A'),
                     _buildDivider(),
-                    _buildStatItem(Icons.rocket_launch_rounded, 'Category',
+                    _buildStatItem(Icons.rocket_launch_rounded, LanguageManager.instance.translate('category'),
                         buildItem.useCase.isNotEmpty ? buildItem.useCase : 'FPV'),
                   ],
                 ),
@@ -164,14 +171,16 @@ class _DroneBuildDetailScreenState extends State<DroneBuildDetailScreen>
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 labelStyle: AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
-                labelColor: Colors.white,
+                labelColor: ThemeManager.instance.themeType == ThemeType.monochrome
+                    ? (ThemeManager.instance.isDark ? Colors.black : Colors.white)
+                    : Colors.white,
                 unselectedLabelColor: AppColors.textMuted,
                 dividerColor: Colors.transparent,
                 padding: const EdgeInsets.all(4),
-                tabs: const [
-                  Tab(text: 'Overview'),
-                  Tab(text: 'Steps'),
-                  Tab(text: 'Wires'),
+                tabs: [
+                  Tab(text: LanguageManager.instance.translate('tab_overview')),
+                  Tab(text: LanguageManager.instance.translate('tab_steps')),
+                  Tab(text: LanguageManager.instance.translate('tab_wires')),
                 ],
               ),
             ),
@@ -190,6 +199,8 @@ class _DroneBuildDetailScreenState extends State<DroneBuildDetailScreen>
           ],
         ),
       ),
+        );
+      },
     );
   }
 
@@ -217,17 +228,19 @@ class _DroneBuildDetailScreenState extends State<DroneBuildDetailScreen>
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       children: [
-        Text('About this build', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+        Text(LanguageManager.instance.translate('about_build'), style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
         Text(
           widget.build.description.isNotEmpty
               ? widget.build.description
-              : 'No description provided for this drone assembly template.',
+              : (LanguageManager.instance.isVietnamese
+                  ? 'Không có mô tả cho cấu hình drone này.'
+                  : 'No description provided for this drone assembly template.'),
           style: AppTextStyles.bodyMedium.copyWith(height: 1.5, color: AppColors.textSecondary),
         ),
         if (widget.build.productIds.isNotEmpty) ...[
           const SizedBox(height: 24),
-          Text('Components List', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+          Text(LanguageManager.instance.translate('components_list'), style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -263,7 +276,13 @@ class _DroneBuildDetailScreenState extends State<DroneBuildDetailScreen>
   Widget _buildStepsTab() {
     final steps = widget.build.steps;
     if (steps.isEmpty) {
-      return _buildEmptyTabState(Icons.rule_rounded, 'No Assembly Steps', 'This guide does not specify assembly steps yet.');
+      return _buildEmptyTabState(
+        Icons.rule_rounded,
+        LanguageManager.instance.isVietnamese ? 'Không có bước lắp ráp' : 'No Assembly Steps',
+        LanguageManager.instance.isVietnamese
+            ? 'Hướng dẫn này chưa cập nhật các bước lắp ráp.'
+            : 'This guide does not specify assembly steps yet.',
+      );
     }
 
     return ListView.builder(
@@ -271,8 +290,13 @@ class _DroneBuildDetailScreenState extends State<DroneBuildDetailScreen>
       itemCount: steps.length,
       itemBuilder: (context, index) {
         final step = steps[index];
-        final title = step['title']?.toString() ?? 'Step ${index + 1}';
-        final desc = step['description']?.toString() ?? '';
+        final isVi = LanguageManager.instance.isVietnamese;
+        final title = isVi
+            ? (step['title_vi']?.toString() ?? step['title']?.toString() ?? 'Bước ${index + 1}')
+            : (step['title']?.toString() ?? 'Step ${index + 1}');
+        final desc = isVi
+            ? (step['description_vi']?.toString() ?? step['description']?.toString() ?? '')
+            : (step['description']?.toString() ?? '');
         final imgUrl = step['image_url']?.toString();
 
         return Padding(
@@ -354,7 +378,13 @@ class _DroneBuildDetailScreenState extends State<DroneBuildDetailScreen>
   Widget _buildWiresTab() {
     final wires = widget.build.wires;
     if (wires.isEmpty) {
-      return _buildEmptyTabState(Icons.cable_rounded, 'No Wiring Guide', 'This guide does not specify custom wiring steps.');
+      return _buildEmptyTabState(
+        Icons.cable_rounded,
+        LanguageManager.instance.isVietnamese ? 'Không có sơ đồ dây' : 'No Wiring Guide',
+        LanguageManager.instance.isVietnamese
+            ? 'Hướng dẫn này chưa cập nhật sơ đồ đi dây.'
+            : 'This guide does not specify custom wiring steps.',
+      );
     }
 
     return ListView.builder(
@@ -362,8 +392,13 @@ class _DroneBuildDetailScreenState extends State<DroneBuildDetailScreen>
       itemCount: wires.length,
       itemBuilder: (context, index) {
         final wire = wires[index];
-        final title = wire['title']?.toString() ?? 'Wiring Diagram ${index + 1}';
-        final desc = wire['description']?.toString() ?? '';
+        final isVi = LanguageManager.instance.isVietnamese;
+        final title = isVi
+            ? (wire['title_vi']?.toString() ?? wire['title']?.toString() ?? 'Sơ đồ đi dây ${index + 1}')
+            : (wire['title']?.toString() ?? 'Wiring Diagram ${index + 1}');
+        final desc = isVi
+            ? (wire['description_vi']?.toString() ?? wire['description']?.toString() ?? '')
+            : (wire['description']?.toString() ?? '');
         final imgUrl = wire['image_url']?.toString();
 
         return Card(

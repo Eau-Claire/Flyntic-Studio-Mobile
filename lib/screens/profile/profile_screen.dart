@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_manager.dart';
+import '../../core/language/language_manager.dart';
 import '../../main.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -47,29 +48,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final createdAtStr = user.createdAt;
       final dt = DateTime.parse(createdAtStr);
-      final months = [
+      final monthsVi = [
         '1', '2', '3', '4', '5', '6',
         '7', '8', '9', '10', '11', '12'
       ];
-      return 'Thành viên từ tháng ${months[dt.month - 1]} năm ${dt.year}';
+      final monthsEn = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      final isVi = LanguageManager.instance.isVietnamese;
+      final monthStr = isVi ? monthsVi[dt.month - 1] : monthsEn[dt.month - 1];
+      final prefix = LanguageManager.instance.translate('member_since');
+      return isVi
+          ? '$prefix $monthStr năm ${dt.year}'
+          : '$prefix $monthStr ${dt.year}';
     } catch (e) {
-      return 'Thành viên từ năm 2026';
+      return LanguageManager.instance.translate('member_since_fallback');
     }
   }
 
   Future<void> _updateEmail() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      _showSnackBar('Vui lòng nhập email mới!', isError: true);
+      _showSnackBar(LanguageManager.instance.translate('enter_new_email'), isError: true);
       return;
     }
     setState(() => _isUpdatingEmail = true);
     try {
       await Supabase.instance.client.auth.updateUser(UserAttributes(email: email));
-      _showSnackBar('Email xác nhận đã được gửi đến $email!');
+      _showSnackBar('${LanguageManager.instance.translate('email_confirm_sent')} $email!');
       _emailController.clear();
     } catch (e) {
-      _showSnackBar('Lỗi: $e', isError: true);
+      _showSnackBar('${LanguageManager.instance.translate('error_prefix')}: $e', isError: true);
     } finally {
       setState(() => _isUpdatingEmail = false);
     }
@@ -78,16 +88,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _updatePassword() async {
     final password = _passwordController.text.trim();
     if (password.length < 8) {
-      _showSnackBar('Mật khẩu phải tối thiểu 8 ký tự!', isError: true);
+      _showSnackBar(LanguageManager.instance.translate('password_min_length'), isError: true);
       return;
     }
     setState(() => _isUpdatingPassword = true);
     try {
       await Supabase.instance.client.auth.updateUser(UserAttributes(password: password));
-      _showSnackBar('Cập nhật mật khẩu thành công!');
+      _showSnackBar(LanguageManager.instance.translate('password_update_success'));
       _passwordController.clear();
     } catch (e) {
-      _showSnackBar('Lỗi: $e', isError: true);
+      _showSnackBar('${LanguageManager.instance.translate('error_prefix')}: $e', isError: true);
     } finally {
       setState(() => _isUpdatingPassword = false);
     }
@@ -106,9 +116,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgPrimary,
-      body: SafeArea(
+    return ListenableBuilder(
+      listenable: LanguageManager.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bgPrimary,
+          body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           children: [
@@ -142,6 +155,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+        );
+      },
     );
   }
 
@@ -150,7 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'KHÔNG GIAN TÀI KHOẢN',
+          LanguageManager.instance.translate('profile_section_title'),
           style: AppTextStyles.labelLarge.copyWith(
             color: AppColors.accentOrange,
             fontSize: 11,
@@ -160,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Hồ sơ của tôi',
+          LanguageManager.instance.translate('my_profile_title'),
           style: AppTextStyles.headlineLarge.copyWith(
             fontWeight: FontWeight.w900,
             fontSize: 26,
@@ -169,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Quản lý tài khoản, gói đăng ký và tiến độ học tập tại một nơi.',
+          LanguageManager.instance.translate('profile_subtitle'),
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.textMuted,
             height: 1.4,
@@ -198,7 +213,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'HỒ SƠ',
+            LanguageManager.instance.translate('profile_header'),
             style: AppTextStyles.titleMedium.copyWith(
               color: AppColors.textMuted,
               fontWeight: FontWeight.bold,
@@ -297,6 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildSubscriptionCard() {
+    final isVi = LanguageManager.instance.isVietnamese;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -308,7 +324,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ĐĂNG KÝ',
+            LanguageManager.instance.translate('subscription_header'),
             style: AppTextStyles.titleMedium.copyWith(
               color: AppColors.textMuted,
               fontWeight: FontWeight.bold,
@@ -320,10 +336,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Expanded(
-                child: _buildSubDetail('Gói', 'Free'),
+                child: _buildSubDetail(LanguageManager.instance.translate('sub_plan'), isVi ? 'Miễn phí' : 'Free'),
               ),
               Expanded(
-                child: _buildSubDetail('Trạng thái', 'profile'),
+                child: _buildSubDetail(LanguageManager.instance.translate('sub_status'), isVi ? 'Hoạt động' : 'Active'),
               ),
             ],
           ),
@@ -331,10 +347,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Expanded(
-                child: _buildSubDetail('Bắt đầu', '1 thg 1, 1970'),
+                child: _buildSubDetail(LanguageManager.instance.translate('sub_start'), isVi ? '1 thg 1, 1970' : 'Jan 1, 1970'),
               ),
               Expanded(
-                child: _buildSubDetail('Gia hạn', '1 thg 1, 1970'),
+                child: _buildSubDetail(LanguageManager.instance.translate('sub_renew'), isVi ? '1 thg 1, 1970' : 'Jan 1, 1970'),
               ),
             ],
           ),
@@ -342,18 +358,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Divider(color: AppColors.border),
           const SizedBox(height: 12),
           Text(
-            'Tính năng đã bao gồm:',
+            LanguageManager.instance.translate('sub_features_title'),
             style: AppTextStyles.bodyMedium.copyWith(
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 10),
-          _buildFeatureItem('Browse full build catalog'),
+          _buildFeatureItem(LanguageManager.instance.translate('feature_browse_catalog')),
           const SizedBox(height: 8),
-          _buildFeatureItem('Access documentation'),
+          _buildFeatureItem(LanguageManager.instance.translate('feature_access_docs')),
           const SizedBox(height: 8),
-          _buildFeatureItem('View course previews'),
+          _buildFeatureItem(LanguageManager.instance.translate('feature_view_previews')),
           const SizedBox(height: 20),
           GestureDetector(
             onTap: () async {
@@ -365,7 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Row(
               children: [
                 Text(
-                  'Quản lý đăng ký',
+                  LanguageManager.instance.translate('sub_manage'),
                   style: TextStyle(
                     color: AppColors.accentOrange,
                     fontWeight: FontWeight.bold,
@@ -427,7 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'HỌC TẬP / Khóa học đã hoàn thành',
+                LanguageManager.instance.translate('learning_completed_header'),
                 style: AppTextStyles.titleMedium.copyWith(
                   color: AppColors.textMuted,
                   fontWeight: FontWeight.bold,
@@ -447,7 +463,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Icon(Icons.bookmark_outline_rounded, color: AppColors.textMuted, size: 36),
                 const SizedBox(height: 12),
                 Text(
-                  'Chưa hoàn thành khóa học nào',
+                  LanguageManager.instance.translate('no_courses_completed_title'),
                   style: AppTextStyles.titleMedium.copyWith(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -457,7 +473,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                     'Khi bạn hoàn thành toàn bộ bài học trong một khóa, khóa học sẽ xuất hiện tại đây.',
+                     LanguageManager.instance.translate('no_courses_completed_desc'),
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textMuted,
                       height: 1.4,
@@ -479,9 +495,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
-                  child: const Text(
-                    'Xem khóa học',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  child: Text(
+                    LanguageManager.instance.translate('view_courses_btn'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
               ],
@@ -504,7 +520,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'CÀI ĐẶT TÀI KHOẢN',
+            LanguageManager.instance.translate('account_settings_header'),
             style: AppTextStyles.titleMedium.copyWith(
               color: AppColors.textMuted,
               fontWeight: FontWeight.bold,
@@ -516,7 +532,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           
           // Đổi email
           Text(
-            'Đổi email',
+            LanguageManager.instance.translate('change_email_title'),
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.bold,
@@ -530,7 +546,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   controller: _emailController,
                   style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
                   decoration: InputDecoration(
-                    hintText: 'Địa chỉ email mới',
+                    hintText: LanguageManager.instance.translate('new_email_hint'),
                     hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
                     filled: true,
                     fillColor: AppColors.bgPrimary,
@@ -561,7 +577,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: _isUpdatingEmail
                     ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textPrimary))
-                    : const Text('Cập nhật email', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    : Text(LanguageManager.instance.translate('update_email_btn'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -569,7 +585,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           
           // Đổi mật khẩu
           Text(
-            'Đổi mật khẩu',
+            LanguageManager.instance.translate('change_password_title'),
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.bold,
@@ -584,7 +600,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   obscureText: true,
                   style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
                   decoration: InputDecoration(
-                    hintText: 'Mật khẩu mới',
+                    hintText: LanguageManager.instance.translate('new_password_hint'),
                     hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
                     filled: true,
                     fillColor: AppColors.bgPrimary,
@@ -615,13 +631,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: _isUpdatingPassword
                     ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textPrimary))
-                    : const Text('Cập nhật mật khẩu', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    : Text(LanguageManager.instance.translate('update_password_btn'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
-            'Min. 8 characters',
+            LanguageManager.instance.translate('min_8_chars'),
             style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted, fontSize: 10),
           ),
         ],
@@ -631,15 +647,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildAppSettingsCard() {
     return ListenableBuilder(
-      listenable: ThemeManager.instance,
+      listenable: Listenable.merge([ThemeManager.instance, LanguageManager.instance]),
       builder: (context, _) {
         final currentType = ThemeManager.instance.themeType;
         final currentMode = ThemeManager.instance.themeMode;
+        final isVi = LanguageManager.instance.isVietnamese;
 
-        String typeStr = currentType == ThemeType.monochrome ? 'Monochrome' : 'Flyntic Classic';
-        String modeStr = 'Dark';
-        if (currentMode == ThemeMode.system) modeStr = 'System';
-        if (currentMode == ThemeMode.light) modeStr = 'Light';
+        String typeStr = currentType == ThemeType.monochrome
+            ? LanguageManager.instance.translate('theme_monochrome')
+            : LanguageManager.instance.translate('theme_classic');
+
+        String modeStr = LanguageManager.instance.translate('theme_dark');
+        if (currentMode == ThemeMode.system) modeStr = LanguageManager.instance.translate('theme_system');
+        if (currentMode == ThemeMode.light) modeStr = LanguageManager.instance.translate('theme_light');
 
         return Container(
           padding: const EdgeInsets.all(20),
@@ -652,7 +672,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'CÀI ĐẶT ỨNG DỤNG',
+                LanguageManager.instance.translate('account_settings_header'),
                 style: AppTextStyles.titleMedium.copyWith(
                   color: AppColors.textMuted,
                   fontWeight: FontWeight.bold,
@@ -662,7 +682,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
               _buildSettingsTile(
-                'Theme Palette',
+                '${LanguageManager.instance.translate('palette_theme')} ${LanguageManager.instance.translate('theme_setting')}',
                 typeStr,
                 Icons.palette_outlined,
                 onTap: () {
@@ -674,7 +694,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 8),
               _buildSettingsTile(
-                'Theme Mode',
+                '${LanguageManager.instance.translate('mode_theme')} ${LanguageManager.instance.translate('theme_setting')}',
                 modeStr,
                 Icons.dark_mode_outlined,
                 onTap: () {
@@ -691,14 +711,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 8),
               _buildSettingsTile(
-                'Language',
-                'English',
+                LanguageManager.instance.translate('language_setting'),
+                isVi
+                    ? LanguageManager.instance.translate('language_vietnamese')
+                    : LanguageManager.instance.translate('language_english'),
                 Icons.language_rounded,
-                onTap: () {},
+                onTap: () {
+                  LanguageManager.instance.setLanguage(
+                    isVi ? Language.en : Language.vi,
+                  );
+                },
               ),
               const SizedBox(height: 8),
               _buildSettingsTile(
-                'Downloads App',
+                LanguageManager.instance.translate('downloads_app'),
                 'flyntic.site',
                 Icons.download_outlined,
                 onTap: () async {
@@ -755,7 +781,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
             const SizedBox(width: 12),
-            Text('Sign Out', style: AppTextStyles.titleMedium.copyWith(color: AppColors.error)),
+            Text(LanguageManager.instance.translate('logout'), style: AppTextStyles.titleMedium.copyWith(color: AppColors.error)),
             const Spacer(),
             Icon(Icons.chevron_right_rounded, color: AppColors.error, size: 18),
           ],
@@ -770,15 +796,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Sign Out', style: AppTextStyles.headlineMedium),
+        title: Text(LanguageManager.instance.translate('logout'), style: AppTextStyles.headlineMedium),
         content: Text(
-          'Are you sure you want to sign out?',
+          LanguageManager.instance.translate('confirm_logout'),
           style: AppTextStyles.bodyLarge,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: AppTextStyles.bodyMedium),
+            child: Text(LanguageManager.instance.translate('cancel'), style: AppTextStyles.bodyMedium),
           ),
           GestureDetector(
             onTap: () async {
@@ -793,7 +819,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'Sign Out',
+                LanguageManager.instance.translate('logout'),
                 style: AppTextStyles.labelLarge.copyWith(
                   color: ThemeManager.instance.themeType == ThemeType.monochrome
                       ? AppColors.bgPrimary
