@@ -481,24 +481,34 @@ class _FlynticLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = ThemeManager.instance.isDark;
 
-    return Image.asset(
-      'assets/flyntic.png',
-      height: 38,
-      fit: BoxFit.contain,
-      color: isDark ? Colors.white : null,
-      errorBuilder: (context, error, stackTrace) => Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          gradient: AppColors.accentGradient,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          Icons.flight_takeoff_rounded,
-          color: ThemeManager.instance.themeType == ThemeType.monochrome
-              ? AppColors.bgPrimary
-              : Colors.white,
-          size: 16,
+    return Container(
+      width: 140,
+      height: 44,
+      alignment: Alignment.centerLeft,
+      child: OverflowBox(
+        minWidth: 190,
+        maxWidth: 190,
+        minHeight: 190,
+        maxHeight: 190,
+        child: Image.asset(
+          'assets/flyntic.png',
+          fit: BoxFit.contain,
+          color: isDark ? Colors.white : null,
+          errorBuilder: (context, error, stackTrace) => Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              gradient: AppColors.accentGradient,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.flight_takeoff_rounded,
+              color: ThemeManager.instance.themeType == ThemeType.monochrome
+                  ? AppColors.bgPrimary
+                  : Colors.white,
+              size: 16,
+            ),
+          ),
         ),
       ),
     );
