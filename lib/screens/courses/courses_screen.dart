@@ -194,8 +194,6 @@ class _CoursesScreenState extends State<CoursesScreen>
               ] else ...[
                 _buildAdCard(),
                 const SizedBox(height: 24),
-                _buildYourPlanSection(),
-                const SizedBox(height: 32),
                 _buildFeaturedSection(),
                 const SizedBox(height: 28),
                 _buildAllCoursesSection(),
@@ -210,7 +208,8 @@ class _CoursesScreenState extends State<CoursesScreen>
 
   Widget _buildHeader() {
     final user = Supabase.instance.client.auth.currentUser;
-    final displayName = user?.userMetadata?['full_name'] ?? 'Sandra';
+    final name = user?.userMetadata?['full_name'] as String?;
+    final displayName = (name != null && name.isNotEmpty) ? name : (user?.email?.split('@').first ?? 'Learner');
     
     // Format date: e.g. "Today 25 Nov."
     final now = DateTime.now();
@@ -219,20 +218,6 @@ class _CoursesScreenState extends State<CoursesScreen>
 
     return Row(
       children: [
-        // User profile picture
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border, width: 1.5),
-            image: const DecorationImage(
-              image: NetworkImage('https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
         // Greeting texts
         Expanded(
           child: Column(
@@ -419,185 +404,7 @@ class _CoursesScreenState extends State<CoursesScreen>
     );
   }
 
-  Widget _buildYourPlanSection() {
-    // If we have courses, take the first one, else show loading/placeholder
-    if (_isLoadingAll) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Continue Learning',
-            style: AppTextStyles.headlineLarge.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.border, width: 1),
-            ),
-            child: Center(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    }
 
-    if (_allCourses.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final Course recentCourse = _allCourses.first;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              'Continue Learning',
-              style: AppTextStyles.headlineLarge.copyWith(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                // Navigate to a dedicated learning progress screen if implemented
-              },
-              child: Text(
-                'Show all',
-                style: AppTextStyles.labelLarge.copyWith(
-                  color: AppColors.textMuted,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: () => _openCourse(recentCourse),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.border, width: 1),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Course Thumbnail or Placeholder
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    width: 76,
-                    height: 76,
-                    child: recentCourse.thumbnail != null && recentCourse.thumbnail!.isNotEmpty
-                        ? Image.network(
-                            recentCourse.thumbnail!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              color: ThemeManager.instance.isDark ? Colors.white12 : Colors.black12,
-                              child: const Icon(Icons.school_rounded, size: 28),
-                            ),
-                          )
-                        : Container(
-                            color: ThemeManager.instance.isDark ? Colors.white12 : Colors.black12,
-                            child: const Icon(Icons.school_rounded, size: 28),
-                          ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Course info details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (recentCourse.formattedLevel.isNotEmpty) ...[
-                        Text(
-                          recentCourse.formattedLevel.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textMuted,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                      ],
-                      Text(
-                        recentCourse.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.titleLarge.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                          fontSize: 15,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        recentCourse.instructorName ?? 'Instructor',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Progress bar
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(2),
-                              child: LinearProgressIndicator(
-                                value: 0.45, // 45% completion
-                                backgroundColor: ThemeManager.instance.isDark ? Colors.white10 : Colors.black12,
-                                valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
-                                minHeight: 3,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            '45%',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildFeaturedSection() {
     return Column(
@@ -1097,30 +904,3 @@ class _CoursesScreenState extends State<CoursesScreen>
   }
 }
 
-class _FlynticLogo extends StatelessWidget {
-  const _FlynticLogo();
-
-  @override
-  Widget build(BuildContext context) {
-    return Image.asset(
-      'assets/logo.png',
-      height: 32,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          gradient: AppColors.accentGradient,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          Icons.flight_takeoff_rounded,
-          color: ThemeManager.instance.themeType == ThemeType.monochrome
-              ? AppColors.bgPrimary
-              : Colors.white,
-          size: 16,
-        ),
-      ),
-    );
-  }
-}

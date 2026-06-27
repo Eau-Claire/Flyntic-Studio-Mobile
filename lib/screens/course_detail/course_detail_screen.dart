@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_manager.dart';
 import '../../models/course.dart';
 import '../../widgets/buttons.dart';
+import '../courses/course_player_screen.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -17,6 +19,20 @@ class CourseDetailScreen extends StatefulWidget {
 class _CourseDetailScreenState extends State<CourseDetailScreen> {
   bool _isEnrolled = false;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkEnrollment();
+  }
+
+  void _checkEnrollment() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      final enrolled = user.userMetadata?['enrolled_courses'] as List<dynamic>? ?? [];
+      _isEnrolled = enrolled.contains(widget.course.id);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -388,7 +404,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               label: _isEnrolled ? 'Go to Course' : 'Enroll Now',
               icon: _isEnrolled ? Icons.arrow_forward_rounded : Icons.school_rounded,
               isLoading: _isLoading,
-              onPressed: _handleEnroll,
+              onPressed: _isEnrolled ? _openCourse : _handleEnroll,
               height: 52,
             ),
           ),
@@ -397,14 +413,51 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     );
   }
 
-  void _handleEnroll() {
+  void _openCourse() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CoursePlayerScreen(course: widget.course),
+      ),
+    );
+  }
+
+  void _handleEnroll() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please sign in to enroll in courses'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 1200), () {
+
+    try {
+      final metadata = Map<String, dynamic>.from(user.userMetadata ?? {});
+      final List<dynamic> enrolled = List<dynamic>.from(metadata['enrolled_courses'] ?? []);
+      
+      final willEnroll = !_isEnrolled;
+      if (willEnroll) {
+        if (!enrolled.contains(widget.course.id)) {
+          enrolled.add(widget.course.id);
+        }
+      } else {
+        enrolled.remove(widget.course.id);
+      }
+      
+      metadata['enrolled_courses'] = enrolled;
+      await Supabase.instance.client.auth.updateUser(UserAttributes(data: metadata));
+
       if (mounted) {
         setState(() {
+          _isEnrolled = willEnroll;
           _isLoading = false;
-          _isEnrolled = !_isEnrolled;
         });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -423,6 +476,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ),
         );
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update enrollment: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }

@@ -1,12 +1,26 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/course.dart';
 import '../models/category.dart';
+import '../models/course_module.dart';
 
 class CourseRepository {
   final SupabaseClient _client;
   static const _pageSize = 12;
 
   CourseRepository(this._client);
+
+  Future<List<CourseModule>> getCourseModules(String courseId) async {
+    try {
+      final response = await _client
+          .from('course_modules')
+          .select('*')
+          .eq('course_id', courseId)
+          .order('order', ascending: true);
+      return (response as List).map((e) => CourseModule.fromMap(e)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
 
   Future<List<Course>> getCourses({
     String? categoryId,

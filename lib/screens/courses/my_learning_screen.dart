@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/course.dart';
 import '../../repositories/course_repository.dart';
-import '../course_detail/course_detail_screen.dart';
+import 'course_player_screen.dart';
 
 class MyLearningScreen extends StatefulWidget {
   const MyLearningScreen({super.key});
@@ -14,25 +14,48 @@ class MyLearningScreen extends StatefulWidget {
 }
 
 class _MyLearningScreenState extends State<MyLearningScreen> {
-  late CourseRepository _repo;
   List<Course> _inProgressCourses = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _repo = CourseRepository(Supabase.instance.client);
     _loadInProgressCourses();
   }
 
   Future<void> _loadInProgressCourses() async {
     setState(() => _isLoading = true);
     try {
-      final courses = await _repo.getCourses(page: 0);
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        if (mounted) {
+          setState(() {
+            _inProgressCourses = [];
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+
+      final enrolledIds = List<String>.from(user.userMetadata?['enrolled_courses'] ?? []);
+      if (enrolledIds.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _inProgressCourses = [];
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+
+      final repo = CourseRepository(Supabase.instance.client);
+      final courseFutures = enrolledIds.map((id) => repo.getCourseById(id));
+      final results = await Future.wait(courseFutures);
+      final enrolledCourses = results.whereType<Course>().toList();
+
       if (mounted) {
         setState(() {
-          // We take up to 2 courses to show as "In Progress"
-          _inProgressCourses = courses.take(2).toList();
+          _inProgressCourses = enrolledCourses;
           _isLoading = false;
         });
       }
@@ -364,7 +387,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                     );
                   }),
                   const SizedBox(height: 12),
-                  // Show all course sections button
+                  // Continue Learning button
                   SizedBox(
                     width: double.infinity,
                     child: TextButton(
@@ -372,19 +395,22 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => CourseDetailScreen(course: course),
+                            builder: (context) => CoursePlayerScreen(course: course),
                           ),
-                        );
+                        ).then((_) {
+                          _loadInProgressCourses();
+                        });
                       },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        backgroundColor: AppColors.border.withValues(alpha: 0.5),
+                        backgroundColor: AppColors.accentOrange.withValues(alpha: 0.15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(color: AppColors.accentOrange.withValues(alpha: 0.3)),
                         ),
                       ),
                       child: Text(
-                        'Show all course sections',
+                        'Continue Learning',
                         style: AppTextStyles.labelLarge.copyWith(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.bold,

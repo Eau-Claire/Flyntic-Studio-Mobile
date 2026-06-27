@@ -8,6 +8,7 @@ import 'screens/courses/courses_screen.dart';
 import 'screens/courses/my_learning_screen.dart';
 import 'screens/catalog/catalog_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/auth/auth_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +47,7 @@ class FlynticApp extends StatelessWidget {
           theme: AppTheme.currentThemeData,
           themeMode: ThemeManager.instance.themeMode,
           debugShowCheckedModeBanner: false,
-          home: const MainShell(),
+          home: const AuthGate(),
         );
       },
     );
