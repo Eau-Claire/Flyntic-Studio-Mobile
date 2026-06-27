@@ -232,7 +232,6 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = ThemeManager.instance.isDark;
-    final logoAsset = isDark ? 'assets/logo-white.png' : 'assets/logo-black.png';
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
@@ -263,9 +262,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   children: [
                     // Flyntic Logo
                     Image.asset(
-                      logoAsset,
+                      'assets/logo-removebg-preview.png',
                       height: 56,
                       fit: BoxFit.contain,
+                      color: isDark ? Colors.white : null,
                       errorBuilder: (context, error, stackTrace) => Container(
                         width: 48,
                         height: 48,
